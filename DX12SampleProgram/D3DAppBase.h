@@ -50,6 +50,8 @@ protected:
 
     void FlushCommandQueue();
 
+    void CalculateFrameStats();
+
     ID3D12Resource* m_currentBackBuffer = nullptr;
 
 protected:
