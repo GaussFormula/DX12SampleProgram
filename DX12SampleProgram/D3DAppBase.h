@@ -52,15 +52,22 @@ protected:
 
     void CalculateFrameStats();
 
+    void LogAdapters();
+    void LogAdapterOutputs(IDXGIAdapter* adapter);
+    void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
+
     ID3D12Resource* m_currentBackBuffer = nullptr;
 
 protected:
     static D3DAppBase* m_app;   // application instance handle.
+
     HINSTANCE m_hMainWnd = nullptr; // main window handle.
     bool m_appPaused = false;    // is the application paused?
     bool m_minimized = false;   // is the application minimized?
     bool m_maximized = false;   // is the application maximized?
     bool m_resizing = false;    // are the resize bars being dragged?
     bool m_fullscreenState = false; // fullscreen state.
+
+    ComPtr<ID3D12Device>    m_device = nullptr;
 
 };
