@@ -24,7 +24,7 @@ public:
     float GetAspectRatio()const;
 
     bool Get4xMsaaState()const;
-    void Set4xMsaaState(bool value);
+    void Set4xMsaaState(const bool value);
 
     int Run();
 
@@ -59,9 +59,10 @@ protected:
     ID3D12Resource* m_currentBackBuffer = nullptr;
 
 protected:
-    static D3DAppBase* m_app;   // application instance handle.
+    static D3DAppBase* m_app;   
 
-    HINSTANCE m_hMainWnd = nullptr; // main window handle.
+    HINSTANCE m_hAppInstance = nullptr; // application instance handle.
+    HWND    m_hMainWnd;                 // main window handle.
     bool m_appPaused = false;    // is the application paused?
     bool m_minimized = false;   // is the application minimized?
     bool m_maximized = false;   // is the application maximized?
@@ -70,4 +71,31 @@ protected:
 
     ComPtr<ID3D12Device>    m_device = nullptr;
 
+    UINT m_width = 0;
+    UINT m_height = 0;
+
+    // Set true to use 4X MSAA. The default is false.
+    bool m_4xMsaaState = false; // 4X MSAA enabled.
+    UINT m_4xMsaaQuality = 0;   // quality level of 4X MSAA.
+
+    GameTimer m_gameTimer;
+
+    ComPtr<IDXGIFactory4>   m_factory;
+    ComPtr<IDXGISwapChain>  m_swapchain;
+    ComPtr<ID3D12Device>    m_device;
+
+    ComPtr<ID3D12CommandQueue> m_commandQueue;
+    ComPtr<ID3D12CommandAllocator> m_commandAllocator;
+    ComPtr<ID3D12GraphicsCommandList> m_commandList;
+
+    UINT m_swapChainBufferCount = 2;
+    UINT m_currentBackBuffer = 0;
+    std::vector<ComPtr<ID3D12Resource>> m_swapChainBuffer;
+    ComPtr<ID3D12Resource>  m_depthStencilBuffer;
+
+    ComPtr<ID3D12DescriptorHeap>    m_rtvHeap;
+    ComPtr<ID3D12DescriptorHeap>    m_dsvHeap;
+
+    D3D12_VIEWPORT m_screenViewport;
+    D3D12_RECT  m_scissorRect;
 };
