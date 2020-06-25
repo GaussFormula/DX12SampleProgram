@@ -191,5 +191,58 @@ LRESULT D3DAppBase::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         m_resizing = true;
         m_gameTimer.Stop();
         return 0;
+
+        // WM_EXITSIZEMOVE is sent when the user releases the resize bars.
+        // Here we reset everything based on the new window dimensions.
+    case WM_EXITSIZEMOVE:
+        m_appPaused = false;
+        m_resizing = false;
+        m_gameTimer.Start();
+        OnResize();
+        return 0;
+
+        // WM_DESTROY is sent when the window is being destroyed.
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+
+        // The WM_MENUCHAR message is sent when a menu is active and the user presses
+        // a key that does not correspond to any mnemonic or accelerator key.
+    case WM_MENUCHAR:
+        // Don't beep when we alt-enter.
+        return MAKELRESULT(0, MNC_CLOSE);
+
+        // Catch this message so to prevent the window from being too small.
+    case WM_GETMINMAXINFO:
+        ((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
+        ((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
+        return 0;
+
+    case WM_LBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+        OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        return 0;
+
+    case WM_LBUTTONUP:
+    case  WM_MBUTTONUP:
+    case WM_RBUTTONUP:
+        OnMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        return 0;
+
+    case WM_MOUSEMOVE:
+        OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        return 0;
+    case WM_KEYUP:
+        if (wParam == VK_ESCAPE)
+        {
+            PostQuitMessage(0);
+        }
+        else if ((int)wParam == VK_F2)
+        {
+            Set4xMsaaState(!m_4xMsaaState);
+        }
+        return 0;
     }
+    return DefWindowProc(hwnd, msg, wParam, lParam);
 }
