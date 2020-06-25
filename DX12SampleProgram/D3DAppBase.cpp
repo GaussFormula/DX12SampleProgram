@@ -108,7 +108,29 @@ bool D3DAppBase::InitMainWindow()
     wc.hCursor = LoadCursor(0, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
     wc.lpszMenuName = 0;
-    wc.lpszClassName = "MainWnd";
+    wc.lpszClassName = L"MainWnd";
+
+    if (!RegisterClass(&wc))
+    {
+        MessageBox(0, L"RegisterClass Failed.", 0, 0);
+        return false;
+    }
+
+    // Compute window rectangle dimensions based on requested client area dimensions.
+    RECT R = { 0,0,m_width,m_height };
+    AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
+    int width = R.right - R.left;
+    int height = R.bottom - R.top;
+    m_hMainWnd = CreateWindow(L"MainWnd", m_mainWndCaption.c_str(), WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, width, height, nullptr, nullptr, m_hAppInstance, 0);
+    if (!m_hMainWnd)
+    {
+        MessageBox(0, L"CreateWindow Failed.", 0, 0);
+        return false;
+    }
+    ShowWindow(m_hMainWnd, SW_SHOW);
+    UpdateWindow(m_hMainWnd);
+    return true;
 }
 
 LRESULT D3DAppBase::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

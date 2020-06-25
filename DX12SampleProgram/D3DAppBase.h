@@ -71,8 +71,8 @@ protected:
 
     ComPtr<ID3D12Device>    m_device = nullptr;
 
-    UINT m_width = 0;
-    UINT m_height = 0;
+    UINT m_width = 1280;
+    UINT m_height = 720;
 
     // Set true to use 4X MSAA. The default is false.
     bool m_4xMsaaState = false; // 4X MSAA enabled.
@@ -98,4 +98,10 @@ protected:
 
     D3D12_VIEWPORT m_screenViewport;
     D3D12_RECT  m_scissorRect;
+
+    // Derived class should set these in derived constructor to customize starting value.
+    std::wstring m_mainWndCaption = L"d3dApp";
+    D3D_DRIVER_TYPE m_d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
+    DXGI_FORMAT m_backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    DXGI_FORMAT m_depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 };
