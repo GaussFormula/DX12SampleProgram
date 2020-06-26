@@ -45,8 +45,7 @@ protected:
 protected:
     bool InitMainWindow();
     bool InitDirect3D();
-    void CreateCommandObjects();
-    void CreateSwapChain();
+    
 
     void FlushCommandQueue();
 
@@ -61,6 +60,10 @@ protected:
     void CreateHardwareAdapter();
     void CreateFenceObject();
     void InitDescriptorSize();
+    void CheckFeatureSupport(); 
+    void CreateCommandObjects();
+    void CreateSwapChain();
+    void CreateRtvAndDsvDescriptorHeaps();
 
     ID3D12Resource* m_currentBackBuffer = nullptr;
 
@@ -114,6 +117,8 @@ protected:
     UINT m_rtvDescriptorSize = 0;
     UINT m_dsvDescriptorSize = 0;
     UINT m_cbvSrvUavDescriptorSize = 0;
+
+    const D3D12_COMMAND_LIST_TYPE m_commandListType = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
     // Derived class should set these in derived constructor to customize starting value.
     std::wstring m_mainWndCaption = L"d3dApp";

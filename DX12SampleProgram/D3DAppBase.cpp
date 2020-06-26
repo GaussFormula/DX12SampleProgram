@@ -350,10 +350,100 @@ void D3DAppBase::InitDescriptorSize()
     m_cbvSrvUavDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
+void D3DAppBase::CheckFeatureSupport()
+{
+    D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
+    msQualityLevels.Format = m_backBufferFormat;
+    msQualityLevels.SampleCount = 4;
+    msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+    msQualityLevels.NumQualityLevels = 0;
+    ThrowIfFailed(m_device->CheckFeatureSupport(
+        D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+        &msQualityLevels,
+        sizeof(msQualityLevels)
+    ));
+    m_4xMsaaQuality = msQualityLevels.NumQualityLevels;
+    assert(m_4xMsaaQuality > 0 && "Unexpected MSAA quality level");
+}
+
+void D3DAppBase::CreateCommandObjects()
+{
+    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+    queueDesc.Type = m_commandListType;
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    ThrowIfFailed(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
+
+    ThrowIfFailed(m_device->CreateCommandAllocator(m_commandListType, IID_PPV_ARGS(&m_commandAllocator)));
+
+    ThrowIfFailed(m_device->CreateCommandList(
+        0, m_commandListType,
+        m_commandAllocator.Get(),
+        nullptr,
+        IID_PPV_ARGS(&m_commandList)
+    ));
+
+    // Start off in a closed state. This is because the first time we refer
+    // to the command list we will Reset it, and it needs to be closed before
+    // calling reset.
+    m_commandList->Close();
+}
+
+void D3DAppBase::CreateSwapChain()
+{
+    // Release the previous swapchain we will be recreating.
+    m_swapchain.Reset();
+
+    DXGI_SWAP_CHAIN_DESC sd;
+    sd.BufferDesc.Width = m_width;
+    sd.BufferDesc.Height = m_height;
+    sd.BufferDesc.RefreshRate.Numerator = 60;
+    sd.BufferDesc.RefreshRate.Denominator = 1;
+    sd.BufferDesc.Format = m_backBufferFormat;
+    sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    sd.SampleDesc.Count = m_4xMsaaState ? 4 : 1;
+    sd.SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
+    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    sd.BufferCount = m_swapChainBufferCount;
+    sd.OutputWindow = m_hMainWnd;
+    sd.Windowed = true;
+    sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+    ThrowIfFailed(m_factory->CreateSwapChain(
+        m_commandQueue.Get(),
+        &sd,
+        &m_swapchain
+    ));
+}
+
+void D3DAppBase::CreateRtvAndDsvDescriptorHeaps()
+{
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
+    rtvHeapDesc.NumDescriptors = m_swapChainBufferCount;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    rtvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    dsvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_depthStencilBuffer)));
+}
+
 bool D3DAppBase::InitDirect3D()
 {
     CreateFactory();
     CreateAdapter();
     CreateFenceObject();
     InitDescriptorSize();
+    CheckFeatureSupport();
+    CreateCommandObjects();
+    CreateSwapChain();
+    CreateRtvAndDsvDescriptorHeaps();
+
+    return true;
 }
