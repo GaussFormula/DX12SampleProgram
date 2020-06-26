@@ -159,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DAppBase.cpp" />
+    <ClCompile Include="D3DUtil.cpp" />
     <ClCompile Include="GameTimer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

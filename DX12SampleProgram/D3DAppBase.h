@@ -56,6 +56,12 @@ protected:
     void LogAdapterOutputs(IDXGIAdapter* adapter);
     void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
+    void CreateFactory();
+    void CreateAdapter();
+    void CreateHardwareAdapter();
+    void CreateFenceObject();
+    void InitDescriptorSize();
+
     ID3D12Resource* m_currentBackBuffer = nullptr;
 
 protected:
@@ -83,6 +89,10 @@ protected:
     ComPtr<IDXGIFactory4>   m_factory;
     ComPtr<IDXGISwapChain>  m_swapchain;
     ComPtr<ID3D12Device>    m_device;
+    ComPtr<IDXGIAdapter1>   m_adapter;
+
+    ComPtr<ID3D12Fence>     m_fence;
+    UINT64                  m_currentFence = 0;
 
     ComPtr<ID3D12CommandQueue> m_commandQueue;
     ComPtr<ID3D12CommandAllocator> m_commandAllocator;
@@ -93,11 +103,17 @@ protected:
     std::vector<ComPtr<ID3D12Resource>> m_swapChainBuffer;
     ComPtr<ID3D12Resource>  m_depthStencilBuffer;
 
+    bool m_useWarpDevice = false;
+
     ComPtr<ID3D12DescriptorHeap>    m_rtvHeap;
     ComPtr<ID3D12DescriptorHeap>    m_dsvHeap;
 
     D3D12_VIEWPORT m_screenViewport;
     D3D12_RECT  m_scissorRect;
+
+    UINT m_rtvDescriptorSize = 0;
+    UINT m_dsvDescriptorSize = 0;
+    UINT m_cbvSrvUavDescriptorSize = 0;
 
     // Derived class should set these in derived constructor to customize starting value.
     std::wstring m_mainWndCaption = L"d3dApp";

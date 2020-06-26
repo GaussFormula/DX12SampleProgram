@@ -17,3 +17,4 @@
 #include <shellapi.h>
 #include <stdexcept>
 #include <unordered_map>
+#include <cassert>

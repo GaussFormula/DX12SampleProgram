@@ -268,3 +268,92 @@ LRESULT D3DAppBase::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
+
+bool D3DAppBase::Initialize()
+{
+    if (!InitMainWindow())
+    {
+        return false;
+    }
+
+    if (!InitDirect3D())
+    {
+        return false;
+    }
+
+    // Do the initial resize code.
+    OnResize();
+    return true;
+}
+
+void D3DAppBase::CreateFactory()
+{
+    UINT dxgiFactoryFlags = 0;
+#if defined(DEBUG)||defined(_DEBUG)
+    // Enable the debug layer.
+    {
+        ComPtr<ID3D12Debug> debugController;
+        ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+        debugController->EnableDebugLayer();
+        dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+    }
+#endif
+
+    ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags,IID_PPV_ARGS(&m_factory)));
+}
+
+void D3DAppBase::CreateHardwareAdapter()
+{
+    m_adapter = nullptr;
+    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters1(adapterIndex, &m_adapter); adapterIndex++)
+    {
+        DXGI_ADAPTER_DESC1 desc;
+        m_adapter->GetDesc1(&desc);
+        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+        {
+            // Don't select the Basic Render Driver adapter
+            // If you want a software adapter, pass in "warp" on the command line.
+            continue;
+        }
+        if (SUCCEEDED(D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
+        {
+            break;
+        }
+    }
+}
+
+void D3DAppBase::CreateAdapter()
+{
+    if (m_useWarpDevice)
+    {
+        ThrowIfFailed(m_factory->EnumWarpAdapter(IID_PPV_ARGS(&m_adapter)));
+    }
+    else
+    {
+        CreateHardwareAdapter();
+        assert(m_adapter != nullptr);
+        ThrowIfFailed(D3D12CreateDevice(m_adapter.Get(), 
+            D3D_FEATURE_LEVEL_11_0, 
+            IID_PPV_ARGS(&m_device)));
+    }
+}
+
+void D3DAppBase::CreateFenceObject()
+{
+    ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
+}
+
+void D3DAppBase::InitDescriptorSize()
+{
+    m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    m_cbvSrvUavDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
+bool D3DAppBase::InitDirect3D()
+{
+    CreateFactory();
+    CreateAdapter();
+    CreateFenceObject();
+    InitDescriptorSize();
+}
