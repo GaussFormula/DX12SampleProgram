@@ -43,6 +43,7 @@ protected:
     virtual void OnMouseMove(WPARAM btnState,int x, int y){}
 
 protected:
+    bool Initialize();
     bool InitMainWindow();
     bool InitDirect3D();
     

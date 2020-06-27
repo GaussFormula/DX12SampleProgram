@@ -447,3 +447,26 @@ bool D3DAppBase::InitDirect3D()
 
     return true;
 }
+
+void D3DAppBase::OnResize()
+{
+
+}
+
+bool D3DAppBase::Initialize()
+{
+    if (!InitMainWindow())
+    {
+        return false;
+    }
+
+    if (!InitDirect3D())
+    {
+        return false;
+    }
+
+    // Do the initial resize code.
+    OnResize();
+
+    return true;
+}
