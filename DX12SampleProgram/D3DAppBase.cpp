@@ -508,6 +508,30 @@ void D3DAppBase::CreateDepthStencilBufferAndView()
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 }
 
+void D3DAppBase::FlushCommandQueue()
+{
+    // Advance the fence value to mark commands up to this fence point.
+    m_currentFence++;
+
+    // Add an instruction to the command queue to set a new fence point. 
+    // Because we are on the GPU time line, the new fence point won't be set
+    // until the GPU finishes processing all the commands prior to this Signal().
+    ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_currentFence));
+
+    // Wait until the GPU has completed commands up tp this fence point.
+    if (m_fence->GetCompletedValue() < m_currentFence)
+    {
+        HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+
+        // Fire event when GPU hits current fence.
+        ThrowIfFailed(m_fence->SetEventOnCompletion(m_currentFence, eventHandle));
+
+        // Wait until the GPU hits current fence.
+        WaitForSingleObject(eventHandle, INFINITE);
+        CloseHandle(eventHandle);
+    }
+}
+
 void D3DAppBase::OnResize()
 {
     assert(m_device);
