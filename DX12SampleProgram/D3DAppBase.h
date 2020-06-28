@@ -65,6 +65,8 @@ protected:
     void CreateCommandObjects();
     void CreateSwapChain();
     void CreateRtvAndDsvDescriptorHeaps();
+    void CreateRenderTargetViews();
+    void CreateDepthStencilBufferAndView();
 
     ID3D12Resource* m_currentBackBuffer = nullptr;
 

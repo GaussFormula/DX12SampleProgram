@@ -448,9 +448,114 @@ bool D3DAppBase::InitDirect3D()
     return true;
 }
 
+void D3DAppBase::CreateRenderTargetViews()
+{
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+    for (UINT i = 0; i < m_swapChainBufferCount; i++)
+    {
+        ThrowIfFailed(m_swapchain->GetBuffer(i, IID_PPV_ARGS(&m_swapChainBuffer[i])));
+        m_device->CreateRenderTargetView(m_swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
+        rtvHeapHandle.Offset(1, m_rtvDescriptorSize);
+    }
+}
+
+void D3DAppBase::CreateDepthStencilBufferAndView()
+{
+    // Create the depth/stencil buffer and view.
+    D3D12_RESOURCE_DESC depthStencilDesc;
+    depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    depthStencilDesc.Alignment = 0;
+    depthStencilDesc.Width = m_width;
+    depthStencilDesc.Height = m_height;
+    depthStencilDesc.DepthOrArraySize = 1;
+    depthStencilDesc.MipLevels = 1;
+
+    // Correction 11/12/2016: SSAO chapter requires an SRV to the depth buffer to read from 
+    // the depth buffer.  Therefore, because we need to create two views to the same resource:
+    //   1. SRV format: DXGI_FORMAT_R24_UNORM_X8_TYPELESS
+    //   2. DSV Format: DXGI_FORMAT_D24_UNORM_S8_UINT
+    // we need to create the depth buffer resource with a typeless format.  
+    depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+
+    depthStencilDesc.SampleDesc.Count = m_4xMsaaState ? 4 : 1;
+    depthStencilDesc.SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
+    depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+    D3D12_CLEAR_VALUE optClear;
+    optClear.Format = m_depthStencilFormat;
+    optClear.DepthStencil.Depth = 1.0f;
+    optClear.DepthStencil.Stencil = 0;
+    ThrowIfFailed(m_device->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        D3D12_HEAP_FLAG_NONE,
+        &depthStencilDesc,
+        D3D12_RESOURCE_STATE_COMMON,
+        &optClear,
+        IID_PPV_ARGS(&m_depthStencilBuffer)
+    ));
+
+    // Create descriptor to mip level 0 of entire resource using the format of the resource.
+    D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+    dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+    dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    dsvDesc.Format = m_depthStencilFormat;
+    dsvDesc.Texture2D.MipSlice = 0;
+    m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &dsvDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    // Transition the resource from its initial state to be used as a depth buffer.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(),
+        D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+}
+
 void D3DAppBase::OnResize()
 {
+    assert(m_device);
+    assert(m_swapchain);
+    assert(m_commandAllocator);
 
+    // Flush before changing any resources.
+    FlushCommandQueue();
+
+    ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+
+    // Release the previous resources we will be recreating.
+    m_swapChainBuffer.resize(m_swapChainBufferCount);
+    for (int i = 0; i < m_swapChainBufferCount; i++)
+    {
+        m_swapChainBuffer[i].Reset();
+    }
+    m_depthStencilBuffer.Reset();
+
+    // Resize the swap chain.
+    ThrowIfFailed(m_swapchain->ResizeBuffers(
+        m_swapChainBufferCount,
+        m_width, m_height,
+        m_backBufferFormat,
+        DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+    ));
+
+    m_currentBackBuffer = 0;
+    CreateRenderTargetViews();
+    CreateDepthStencilBufferAndView();
+
+    // Execute the resize commands.
+    ThrowIfFailed(m_commandList->Close());
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // Wait until resize is complete.
+    FlushCommandQueue();
+
+    // Update the viewport transform to cover the client area.
+    m_screenViewport.TopLeftX = 0;
+    m_screenViewport.TopLeftY = 0;
+    m_screenViewport.Width = static_cast<float>(m_width);
+    m_screenViewport.Height = static_cast<float>(m_height);
+    m_screenViewport.MinDepth = 0.0f;
+    m_screenViewport.MaxDepth = 1.0f;
+
+    m_scissorRect = { 0,0,m_width,m_height };
 }
 
 bool D3DAppBase::Initialize()
