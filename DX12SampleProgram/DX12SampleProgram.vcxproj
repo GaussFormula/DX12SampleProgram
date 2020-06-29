@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BoxApp.h" />
     <ClInclude Include="D3DAppBase.h" />
     <ClInclude Include="D3DUtil.h" />
     <ClInclude Include="d3dx12.h" />
