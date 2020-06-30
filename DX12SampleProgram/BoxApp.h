@@ -42,4 +42,8 @@ private:
     void BuildShadersAndInputLayout();
     void BuildBoxGeometry();
     void BuildPSO();
+
+private:
+    ComPtr<ID3D12DescriptorHeap> m_cbvHeap = nullptr;
+    ComPtr<ID3D12RootSignature> m_rootSignature = nullptr;
 };
