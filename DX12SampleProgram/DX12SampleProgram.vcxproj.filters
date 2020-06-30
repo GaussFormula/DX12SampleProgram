@@ -33,6 +33,9 @@
     <ClInclude Include="BoxApp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="UploadBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DAppBase.cpp">
@@ -42,6 +45,9 @@
       <Filter>头文件</Filter>
     </ClCompile>
     <ClCompile Include="D3DUtil.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BoxApp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
