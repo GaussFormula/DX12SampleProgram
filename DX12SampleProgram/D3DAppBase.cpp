@@ -22,6 +22,10 @@ D3DAppBase::D3DAppBase(HINSTANCE hInstance):m_hAppInstance(hInstance)
     // Only one d3dapp can be constructed.
     assert(m_app == nullptr);
     m_app = this;
+
+    WCHAR assetsPath[512];
+    GetAssetPath(assetsPath, _countof(assetsPath));
+    m_assetPath = assetsPath;
 }
 
 D3DAppBase::~D3DAppBase()
@@ -598,4 +602,9 @@ bool D3DAppBase::Initialize()
     OnResize();
 
     return true;
+}
+
+std::wstring D3DAppBase::GetAssetFullPath(LPCTSTR assetName)
+{
+    return m_assetPath + assetName;
 }

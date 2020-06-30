@@ -68,6 +68,8 @@ protected:
     void CreateRenderTargetViews();
     void CreateDepthStencilBufferAndView();
 
+    std::wstring GetAssetFullPath(LPCTSTR assetName);
+
     ID3D12Resource* m_currentBackBuffer = nullptr;
 
 protected:
@@ -122,6 +124,7 @@ protected:
     UINT m_cbvSrvUavDescriptorSize = 0;
 
     const D3D12_COMMAND_LIST_TYPE m_commandListType = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    std::wstring m_assetPath;
 
     // Derived class should set these in derived constructor to customize starting value.
     std::wstring m_mainWndCaption = L"d3dApp";
