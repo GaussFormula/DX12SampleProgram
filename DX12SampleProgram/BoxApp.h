@@ -35,4 +35,11 @@ private:
     virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
     virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
     virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
+
+    void BuildConstantDescriptorHeaps();
+    void BuildConstantBuffers();
+    void BuildRootSignature();
+    void BuildShadersAndInputLayout();
+    void BuildBoxGeometry();
+    void BuildPSO();
 };
