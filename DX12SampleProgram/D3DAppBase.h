@@ -52,9 +52,9 @@ protected:
 
     void CalculateFrameStats();
 
-    void LogAdapters();
+    /*void LogAdapters();
     void LogAdapterOutputs(IDXGIAdapter* adapter);
-    void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
+    void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);*/
 
     void CreateFactory();
     void CreateAdapter();
@@ -68,9 +68,13 @@ protected:
     void CreateRenderTargetViews();
     void CreateDepthStencilBufferAndView();
 
+    ID3D12Resource* CurrentBackBuffer()const;
+    D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
+    D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
+
     std::wstring GetAssetFullPath(LPCTSTR assetName);
 
-    ID3D12Resource* m_currentBackBuffer = nullptr;
+    ID3D12Resource* m_currentBackBufferIndex = nullptr;
 
 protected:
     static D3DAppBase* m_app;   
@@ -107,7 +111,7 @@ protected:
     ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
     UINT m_swapChainBufferCount = 2;
-    UINT m_currentBackBuffer = 0;
+    UINT m_currentBackBufferIndex = 0;
     std::vector<ComPtr<ID3D12Resource>> m_swapChainBuffer;
     ComPtr<ID3D12Resource>  m_depthStencilBuffer;
 

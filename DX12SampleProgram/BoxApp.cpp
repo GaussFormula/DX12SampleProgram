@@ -204,3 +204,94 @@ bool BoxApp::Initialize()
 
     return true;
 }
+
+void BoxApp::OnResize()
+{
+    D3DAppBase::OnResize();
+
+    // The window resized, so update the aspect ratio and recompute the projection matrix.
+    m_proj = XMMatrixPerspectiveFovLH(0.25f * XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
+}
+
+void BoxApp::Update(const GameTimer& gt)
+{
+    // Convert Spherical to Cartesian coordinates.
+    float x = m_radius * sinf(m_phi) * cosf(m_theta);
+    float z = m_radius * sinf(m_phi) * sinf(m_theta);
+    float y = m_radius * cosf(m_phi);
+
+    // Build the view matrix.
+    XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
+    XMVECTOR target = XMVectorZero();
+    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    m_view = XMMatrixLookAtLH(pos, target, up);
+
+    XMMATRIX worldViewProj = m_world * m_view * m_proj;
+    // Update the constant buffer with the lastest worldViewProj matrix.
+    ObjectConstants objConstants;
+    objConstants.WorldViewProj = XMMatrixTranspose(worldViewProj);
+    m_objectCB->CopyData(0, objConstants);
+}
+
+void BoxApp::Draw(const GameTimer& gt)
+{
+    // Reuse the memory associated with command recording.
+    // We can only reset when the associated command lists have finished execution on the GPU.
+    ThrowIfFailed(m_commandAllocator->Reset());
+
+    // A command list can be reset after it after it has been added to the command queue via ExecuteCommandlist.
+    // Reusing the command list reuses memory.
+    ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_PSO.Get()));
+
+    m_commandList->RSSetViewports(1, &m_screenViewport);
+    m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
+    // Indicate a state transition on the resource usage.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        m_swapChainBuffer[m_currentBackBufferIndex].Get(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+    ));
+    
+    // Clear the back buffer and depth buffer.
+    m_commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightBlue, 0, nullptr);
+    m_commandList->ClearDepthStencilView(DepthStencilView(),
+        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    // Specify the buffers we are going to render to.
+    m_commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { m_cbvHeap.Get() };
+    m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+    m_commandList->IASetVertexBuffers(0, 1, &m_boxGeo->VertexBufferView());
+    m_commandList->IASetIndexBuffer(&m_boxGeo->IndexBufferView());
+    m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+    m_commandList->DrawIndexedInstanced(m_boxGeo->DrawArags["box"].IndexCount,
+        1, 0, 0, 0);
+
+    // Indicate a state transition on the resource usage.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+    // Done recording commands.
+    ThrowIfFailed(m_commandList->Close());
+
+    // Add the command list to the queue for execution.
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // swap the back and front buffers.
+    ThrowIfFailed(m_swapchain->Present(0, 0));
+    m_currentBackBufferIndex = (m_currentBackBufferIndex + 1) % m_swapChainBufferCount;
+
+    // Wait until frame commands are complete.  This waiting is inefficient and is
+    // done for simplicity.  Later we will show how to organize our rendering code
+    // so we do not have to wait per frame.
+    FlushCommandQueue();
+}
