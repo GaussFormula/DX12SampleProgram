@@ -196,6 +196,7 @@ bool BoxApp::Initialize()
     BuildPSO();
 
     // Execute the initialization commands.
+    ThrowIfFailed(m_commandList->Close());
     ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
     m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
 

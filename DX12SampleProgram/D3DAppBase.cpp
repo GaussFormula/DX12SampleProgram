@@ -419,7 +419,7 @@ void D3DAppBase::CreateRtvAndDsvDescriptorHeaps()
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     dsvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_depthStencilBuffer)));
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
 }
 
 bool D3DAppBase::InitDirect3D()
