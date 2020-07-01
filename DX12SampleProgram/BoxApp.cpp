@@ -187,4 +187,20 @@ bool BoxApp::Initialize()
 
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+
+    BuildConstantDescriptorHeaps();
+    BuildConstantBuffers();
+    BuildRootSignature();
+    BuildShadersAndInputLayout();
+    BuildBoxGeometry();
+    BuildPSO();
+
+    // Execute the initialization commands.
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // Wait until initialization is complete.
+    FlushCommandQueue();
+
+    return true;
 }
