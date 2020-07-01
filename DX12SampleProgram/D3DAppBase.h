@@ -8,6 +8,8 @@
 #include "D3DUtil.h"
 #include "GameTimer.h"
 
+using Microsoft::WRL::ComPtr;
+
 class D3DAppBase
 {
 protected:
@@ -32,7 +34,6 @@ public:
     virtual LRESULT MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 protected:
-    virtual void CreateRtvAndDsvDescriptorHeaps();
     virtual void OnResize();
     virtual void Update(const GameTimer& gt) = 0;
     virtual void Draw(const GameTimer& gt) = 0;
@@ -43,7 +44,6 @@ protected:
     virtual void OnMouseMove(WPARAM btnState,int x, int y){}
 
 protected:
-    bool Initialize();
     bool InitMainWindow();
     bool InitDirect3D();
     
@@ -74,8 +74,6 @@ protected:
 
     std::wstring GetAssetFullPath(LPCTSTR assetName);
 
-    ID3D12Resource* m_currentBackBufferIndex = nullptr;
-
 protected:
     static D3DAppBase* m_app;   
 
@@ -86,8 +84,6 @@ protected:
     bool m_maximized = false;   // is the application maximized?
     bool m_resizing = false;    // are the resize bars being dragged?
     bool m_fullscreenState = false; // fullscreen state.
-
-    ComPtr<ID3D12Device>    m_device = nullptr;
 
     UINT m_width = 1280;
     UINT m_height = 720;
@@ -111,7 +107,7 @@ protected:
     ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
     UINT m_swapChainBufferCount = 2;
-    UINT m_currentBackBufferIndex = 0;
+    int m_currentBackBufferIndex = 0;
     std::vector<ComPtr<ID3D12Resource>> m_swapChainBuffer;
     ComPtr<ID3D12Resource>  m_depthStencilBuffer;
 

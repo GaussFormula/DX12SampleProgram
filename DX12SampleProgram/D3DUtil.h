@@ -130,7 +130,7 @@ inline void GetAssetPath(_Out_writes_(pathSize)WCHAR* path, UINT pathSize)
     }
 }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
+static Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
     ID3D12Device* device,
     ID3D12GraphicsCommandList* cmdList,
     const void* initData,
@@ -138,6 +138,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
     Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer
 )
 {
+    using Microsoft::WRL::ComPtr;
     ComPtr<ID3D12Resource> defaultBuffer;
 
     // Create the actual default buffer resource.

@@ -1,5 +1,6 @@
+#include "stdafx.h"
 #include "D3DAppBase.h"
-#include    <windowsx.h>
+#include  <windowsx.h>
 using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace DirectX;
@@ -273,23 +274,6 @@ LRESULT D3DAppBase::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-bool D3DAppBase::Initialize()
-{
-    if (!InitMainWindow())
-    {
-        return false;
-    }
-
-    if (!InitDirect3D())
-    {
-        return false;
-    }
-
-    // Do the initial resize code.
-    OnResize();
-    return true;
-}
-
 void D3DAppBase::CreateFactory()
 {
     UINT dxgiFactoryFlags = 0;
@@ -525,7 +509,7 @@ void D3DAppBase::FlushCommandQueue()
     // Wait until the GPU has completed commands up tp this fence point.
     if (m_fence->GetCompletedValue() < m_currentFence)
     {
-        HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+        HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
 
         // Fire event when GPU hits current fence.
         ThrowIfFailed(m_fence->SetEventOnCompletion(m_currentFence, eventHandle));
@@ -549,7 +533,7 @@ void D3DAppBase::OnResize()
 
     // Release the previous resources we will be recreating.
     m_swapChainBuffer.resize(m_swapChainBufferCount);
-    for (int i = 0; i < m_swapChainBufferCount; i++)
+    for (UINT i = 0; i < m_swapChainBufferCount; i++)
     {
         m_swapChainBuffer[i].Reset();
     }
@@ -583,7 +567,7 @@ void D3DAppBase::OnResize()
     m_screenViewport.MinDepth = 0.0f;
     m_screenViewport.MaxDepth = 1.0f;
 
-    m_scissorRect = { 0,0,m_width,m_height };
+    m_scissorRect = { 0,0,static_cast<LONG>(m_width),static_cast<LONG>(m_height) };
 }
 
 bool D3DAppBase::Initialize()

@@ -248,8 +248,7 @@ void BoxApp::Draw(const GameTimer& gt)
 
     // Indicate a state transition on the resource usage.
     m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-        m_swapChainBuffer[m_currentBackBufferIndex].Get(),
-        D3D12_RESOURCE_STATE_PRESENT,
+        CurrentBackBuffer(),D3D12_RESOURCE_STATE_PRESENT,
         D3D12_RESOURCE_STATE_RENDER_TARGET
     ));
     
