@@ -18,3 +18,5 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <cassert>
+#include <algorithm>
+#include <array>

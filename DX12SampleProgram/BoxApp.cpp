@@ -73,7 +73,7 @@ void BoxApp::BuildShadersAndInputLayout()
     UINT compileFlags = 0;
 #endif
     ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &m_vertexShaderByteCode, nullptr));
-    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &m_indexShaderByteCode, nullptr));
+    ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &m_pixelShaderByteCode, nullptr));
 
     m_inputLayout =
     {
@@ -82,6 +82,101 @@ void BoxApp::BuildShadersAndInputLayout()
     };
 }
 
+void BoxApp::BuildBoxGeometry()
+{
+    std::array<Vertex, 8> vertices =
+    {
+        Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White) }),
+        Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black) }),
+        Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red) }),
+        Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green) }),
+        Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue) }),
+        Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow) }),
+        Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan) }),
+        Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta) })
+    };
+
+    std::array<std::uint16_t, 36> indices =
+    {
+        // front face
+        0, 1, 2,
+        0, 2, 3,
+
+        // back face
+        4, 6, 5,
+        4, 7, 6,
+
+        // left face
+        4, 5, 1,
+        4, 1, 0,
+
+        // right face
+        3, 2, 6,
+        3, 6, 7,
+
+        // top face
+        1, 5, 6,
+        1, 6, 2,
+
+        // bottom face
+        4, 0, 3,
+        4, 3, 7
+    };
+    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+    m_boxGeo = std::make_unique<MeshGeometry>();
+    m_boxGeo->Name = "BoxGeo";
+
+    ThrowIfFailed(D3DCreateBlob(vbByteSize, &m_boxGeo->VertexBufferCPU));
+    CopyMemory(m_boxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &m_boxGeo->IndexBufferCPU));
+    CopyMemory(m_boxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+    m_boxGeo->VertexBufferGPU = CreateDefaultBuffer(m_device.Get(),
+        m_commandList.Get(), vertices.data(), vbByteSize,
+        m_boxGeo->VertexBufferUploader);
+
+    m_boxGeo->IndexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(),
+        indices.data(), ibByteSize, m_boxGeo->IndexBufferUploader);
+
+    m_boxGeo->VertexByteStride = sizeof(Vertex);
+    m_boxGeo->VertexBufferByteSize = vbByteSize;
+    m_boxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    m_boxGeo->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry submesh;
+    submesh.IndexCount = (UINT)indices.size();
+    submesh.BaseVertexLocation = 0;
+    submesh.StartIndexCount = 0;
+
+    m_boxGeo->DrawArags["box"] = submesh;
+}
+
+void BoxApp::BuildPSO()
+{
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+    psoDesc.InputLayout = { m_inputLayout.data(),(UINT)m_inputLayout.size() };
+    psoDesc.pRootSignature = m_rootSignature.Get();
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_vertexShaderByteCode.Get());
+    psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_pixelShaderByteCode.Get());
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.SampleMask = UINT_MAX;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = m_backBufferFormat;
+    psoDesc.SampleDesc.Count = m_4xMsaaState ? 4 : 1;
+    psoDesc.SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
+    psoDesc.DSVFormat = m_depthStencilFormat;
+    ThrowIfFailed(m_device->CreateGraphicsPipelineState(
+        &psoDesc,
+        IID_PPV_ARGS(&m_PSO)
+    ));
+}
 
 bool BoxApp::Initialize()
 {

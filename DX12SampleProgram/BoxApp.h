@@ -53,7 +53,7 @@ private:
     std::unique_ptr<MeshGeometry> m_boxGeo = nullptr;
 
     ComPtr<ID3DBlob> m_vertexShaderByteCode = nullptr;
-    ComPtr<ID3DBlob> m_indexShaderByteCode = nullptr;
+    ComPtr<ID3DBlob> m_pixelShaderByteCode = nullptr;
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout;
 
