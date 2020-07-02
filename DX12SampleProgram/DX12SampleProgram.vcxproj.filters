@@ -58,7 +58,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\Debug\shaders.hlsl">
+    <CustomBuild Include="shaders.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
   </ItemGroup>
