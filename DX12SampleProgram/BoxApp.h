@@ -6,7 +6,7 @@
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
-struct Vertex
+struct VertexForBox
 {
     XMFLOAT3 Pos;
     XMFLOAT4 Color;

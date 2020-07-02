@@ -86,16 +86,16 @@ void BoxApp::BuildShadersAndInputLayout()
 
 void BoxApp::BuildBoxGeometry()
 {
-    std::array<Vertex, 8> vertices =
+    std::array<VertexForBox, 8> vertices =
     {
-        Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White) }),
-        Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black) }),
-        Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red) }),
-        Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green) }),
-        Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue) }),
-        Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow) }),
-        Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan) }),
-        Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta) })
+        VertexForBox({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White) }),
+        VertexForBox({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black) }),
+        VertexForBox({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red) }),
+        VertexForBox({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green) }),
+        VertexForBox({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue) }),
+        VertexForBox({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow) }),
+        VertexForBox({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan) }),
+        VertexForBox({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta) })
     };
 
     std::array<std::uint16_t, 36> indices =
@@ -124,7 +124,7 @@ void BoxApp::BuildBoxGeometry()
         4, 0, 3,
         4, 3, 7
     };
-    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+    const UINT vbByteSize = (UINT)vertices.size() * sizeof(VertexForBox);
     const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
     m_boxGeo = std::make_unique<MeshGeometry>();
@@ -143,7 +143,7 @@ void BoxApp::BuildBoxGeometry()
     m_boxGeo->IndexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(),
         indices.data(), ibByteSize, m_boxGeo->IndexBufferUploader);
 
-    m_boxGeo->VertexByteStride = sizeof(Vertex);
+    m_boxGeo->VertexByteStride = sizeof(VertexForBox);
     m_boxGeo->VertexBufferByteSize = vbByteSize;
     m_boxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
     m_boxGeo->IndexBufferByteSize = ibByteSize;
