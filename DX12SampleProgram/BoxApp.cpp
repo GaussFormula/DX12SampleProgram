@@ -4,7 +4,8 @@
 BoxApp::BoxApp(HINSTANCE hInstance):
     D3DAppBase(hInstance)
 {
-
+    m_lastMousePos.x = 0;
+    m_lastMousePos.y = 0;
 }
 
 BoxApp::~BoxApp()
@@ -29,7 +30,7 @@ void BoxApp::BuildConstantBuffers()
     D3D12_GPU_VIRTUAL_ADDRESS cbAddress = m_objectCB->Resource()->GetGPUVirtualAddress();
 
     UINT boxCBufIndex = 0;
-    cbAddress += boxCBufIndex * objectConstantBufferByteSize;
+    cbAddress += static_cast<UINT64>(boxCBufIndex) * static_cast<UINT64>(objectConstantBufferByteSize);
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
     cbvDesc.BufferLocation = cbAddress;
@@ -46,6 +47,7 @@ void BoxApp::BuildRootSignature()
     // Create a single descriptor table of CBVs.
     CD3DX12_DESCRIPTOR_RANGE cbvTable;
     cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+    slotRootParameter[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
 
     // Create a single descriptor table of CBVs.
