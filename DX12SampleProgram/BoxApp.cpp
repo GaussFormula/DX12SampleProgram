@@ -25,8 +25,8 @@ void BoxApp::BuildConstantDescriptorHeaps()
 
 void BoxApp::BuildConstantBuffers()
 {
-    m_objectCB = std::make_unique<UploadBuffer<ObjectConstants>>(m_device.Get(), 1, true);
-    UINT objectConstantBufferByteSize = CalculateConstantBufferByteSize(sizeof(ObjectConstants));
+    m_objectCB = std::make_unique<UploadBuffer<ObjectConstantsForBox>>(m_device.Get(), 1, true);
+    UINT objectConstantBufferByteSize = CalculateConstantBufferByteSize(sizeof(ObjectConstantsForBox));
     D3D12_GPU_VIRTUAL_ADDRESS cbAddress = m_objectCB->Resource()->GetGPUVirtualAddress();
 
     UINT boxCBufIndex = 0;
@@ -34,7 +34,7 @@ void BoxApp::BuildConstantBuffers()
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
     cbvDesc.BufferLocation = cbAddress;
-    cbvDesc.SizeInBytes = CalculateConstantBufferByteSize(sizeof(ObjectConstants));
+    cbvDesc.SizeInBytes = CalculateConstantBufferByteSize(sizeof(ObjectConstantsForBox));
     m_device->CreateConstantBufferView(&cbvDesc,
         m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
 }
@@ -231,7 +231,7 @@ void BoxApp::Update(const GameTimer& gt)
 
     XMMATRIX worldViewProj = m_world * m_view * m_proj;
     // Update the constant buffer with the lastest worldViewProj matrix.
-    ObjectConstants objConstants;
+    ObjectConstantsForBox objConstants;
     objConstants.WorldViewProj = XMMatrixTranspose(worldViewProj);
     m_objectCB->CopyData(0, objConstants);
 }

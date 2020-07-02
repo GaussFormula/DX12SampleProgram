@@ -12,7 +12,7 @@ struct Vertex
     XMFLOAT4 Color;
 };
 
-struct ObjectConstants
+struct ObjectConstantsForBox
 {
     XMMATRIX WorldViewProj = XMMatrixIdentity();
 };
@@ -48,7 +48,7 @@ private:
     ComPtr<ID3D12DescriptorHeap> m_cbvHeap = nullptr;
     ComPtr<ID3D12RootSignature> m_rootSignature = nullptr;
 
-    std::unique_ptr<UploadBuffer<ObjectConstants>>  m_objectCB = nullptr;
+    std::unique_ptr<UploadBuffer<ObjectConstantsForBox>>  m_objectCB = nullptr;
 
     std::unique_ptr<MeshGeometry> m_boxGeo = nullptr;
 
