@@ -72,6 +72,41 @@ public:
         std::vector<uint16> m_indices16;
     };
 
+    // Create a box centered at the origin with the given dimensions, where
+    // each face has m rows and n column of vertices.
+    MeshData CreateBox(float width, float height, float depth, uint32 numSubdivisions);
+
+    // Create a sphere centered at the origin with the given radius.
+    // The slices and stacks parameters control the degree of tessellation.
+    MeshData CreateSphere(float radius, uint32 sliceCount, uint32 stackCount);
+
+    // Create a geosphere centered at the origin with the given radius.
+    // The depth controls the level of tessellation.
+    MeshData CreateGeosphere(float radius, uint32 numSubdivisions);
 
 
+    // Create a cylinder parallel to the y-axis, and centered about the origin.
+    // The bottom and the top radius can vary to form various cone shapes rather
+    // than ture cylinders. The slices and stacks parameters control the degree
+    // of tessellation.
+    MeshData CreateCylinder(float bottomRadius, float topRadius, float height, 
+        uint32 sliceCount, uint32 stackCount);
+
+    // Create an mxn grid in the xz-plane with m rows and n columns, centered about the
+    // origin with the specified width and depth
+    MeshData CreateGrid(float width, float depth, uint32 m, uint32 n);
+
+    // Create a quad aligned with the screen.
+    MeshData CreateQuad(float x, float y, float w, float h, float depth);
+
+    // Creates a pyramid.
+    MeshData CreatePyramid(float bottomSliceCount, float bottomRadius, float height, uint32 numSubdivisions);
+
+private:
+    void Subdivide(MeshData& meshData);
+    Vertex MidPoint(const Vertex& v0, const Vertex& v1);
+    void BuildCylinderTopCap(float bottomRadius, float topRadius, float height,
+        uint32 sliceCount, uint32 stackCount, MeshData& meshData);
+    void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, 
+        uint32 sliceCount, uint32 stackCount, MeshData& meshData);
 };
