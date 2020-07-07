@@ -92,3 +92,27 @@ GeometryGenerator::MeshData GeometryGenerator::CreateBox(float width, float heig
     }
     return meshData;
 }
+
+GeometryGenerator::MeshData GeometryGenerator::CreateSphere(float radius, uint32 sliceCount, uint32 stackCount)
+{
+    MeshData meshData;
+
+    // Compute the vertices stating at the top pole and moving down the stacks.
+
+    // Poles: note that there will be texture coordinate distortion as there is
+    // not a unique point on the texture map to assign to the pole when mapping
+    // a rectangular texture onto a sphere.
+    Vertex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    Vertex bottomVertex(0.0f, -radius, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+    meshData.Vertices.push_back(topVertex);
+
+    float phiStep = XM_PI / stackCount;
+    float thetaStep = 2.0f * XM_PI / sliceCount;
+
+    // Compute vertices for each stack ring (do not count the poles as rings)
+    for (uint32 i = 1; i <= stackCount - 1; ++i)
+    {
+        float phi = i * phiStep;
+    }
+}
