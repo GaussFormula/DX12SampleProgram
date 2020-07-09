@@ -113,6 +113,34 @@ GeometryGenerator::MeshData GeometryGenerator::CreateSphere(float radius, uint32
     // Compute vertices for each stack ring (do not count the poles as rings)
     for (uint32 i = 1; i <= stackCount - 1; ++i)
     {
-        float phi = i * phiStep;
+        float phi = i * phiStep;// phi is vertically
+
+        // Vertices of ring.
+        for (uint32 j = 0; j <= sliceCount; ++j)
+        {
+            float theta = j * thetaStep;// theta for horizontally.
+
+            Vertex v;
+            // Spherical to Cartesian.
+            v.Position.x = radius * sinf(phi) * cosf(theta);
+            v.Position.y = radius * cosf(phi);
+            v.Position.z = radius * sinf(phi) * sinf(theta);
+
+            // Partial derivative of P with respect to theta
+            v.TangentU.x = -radius * sinf(phi) * sinf(theta);
+            v.TangentU.y = 0.0f;
+            v.TangentU.z = +radius * sinf(phi) * cosf(theta);
+
+            XMVECTOR T = XMLoadFloat3(&v.TangentU);
+            XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
+
+            XMVECTOR p = XMLoadFloat3(&v.Position);
+            XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
+
+            v.TexC.x = theta / XM_2PI;
+            v.TexC.y = phi / XM_PI;
+
+            meshData.Vertices.push_back(v);
+        }
     }
 }
