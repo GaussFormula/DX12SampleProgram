@@ -143,4 +143,59 @@ GeometryGenerator::MeshData GeometryGenerator::CreateSphere(float radius, uint32
             meshData.Vertices.push_back(v);
         }
     }
+    meshData.Vertices.push_back(bottomVertex);
+
+    // Compute indices for top stack. The top stack was written first to 
+    // the vertex buffer and connects the top pole to the first ring.
+
+    for (uint32 i = 1; i <= sliceCount; i++)
+    {
+        meshData.Indices32.push_back(0);
+        meshData.Indices32.push_back(i % sliceCount + 1);
+        meshData.Indices32.push_back(i);
+    }
+
+    // Compute indices for inner stacks (not connected to poles).
+    // Offset the indices to the index of the first vertex in the first ring.
+    // This is just skipping the top pole vertex.
+    uint32 baseIndex = 1;
+    uint32 ringVertexCount = sliceCount + 1;
+    for (uint32 i = 0; i < stackCount - 2; ++i)
+    {
+        for (uint32 j = 0; j < sliceCount; j++)
+        {
+            meshData.Indices32.push_back(baseIndex + i * ringVertexCount + j);
+            meshData.Indices32.push_back(baseIndex + i * ringVertexCount + j + 1);
+            meshData.Indices32.push_back(baseIndex + (i + 1) * ringVertexCount + j);
+
+            meshData.Indices32.push_back(baseIndex + (i + 1) * ringVertexCount + j);
+            meshData.Indices32.push_back(baseIndex + i * ringVertexCount + j + 1);
+            meshData.Indices32.push_back(baseIndex + (i + 1) * ringVertexCount + j + 1);
+        }
+    }
+
+    // Compute indices for bottom stack. The bottom stack was written last to the vertex buffer
+    // and connects the bottom pole to the bottom ring.
+
+    // South pole vertex was added last.
+    uint32 southPoleIndex = (uint32)meshData.Vertices.size() - 1;
+
+    // Offset the indices to the index of the first vertex of last ring.
+    baseIndex = southPoleIndex - ringVertexCount;
+
+    for (uint32 i = 0; i < sliceCount; i++)
+    {
+        meshData.Indices32.push_back(southPoleIndex);
+        meshData.Indices32.push_back(baseIndex + i);
+        if (i == sliceCount - 1)
+        {
+            meshData.Indices32.push_back(baseIndex);
+        }
+        else
+        {
+            meshData.Indices32.push_back(baseIndex + i + 1);
+        }
+    }
+
+    return meshData;
 }
