@@ -364,3 +364,57 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGeosphere(float radius, uin
     }
     return meshData;
 }
+
+GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount)
+{
+    MeshData meshData;
+
+    // Build Stacks.
+
+    float stackHeight = height / stackCount;
+
+    // Amount to increment radius as we move up each stack level from bottom to top.
+    float radiusStep = (topRadius - bottomRadius) / stackCount;
+
+    uint32 ringCount = stackCount + 1;
+
+    // Compute vertices for each stack ring starting at the bottom and moving up.
+    for (uint32 i = 0; i < ringCount; ++i)
+    {
+        float y = -0.5f * height + stackHeight;
+        float r = bottomRadius + i * radiusStep;
+
+        // Vertices of ring.
+        float dTheta = 2.0f * XM_PI / sliceCount;
+        for (uint32 j = 0; j <= sliceCount; ++j)
+        {
+            Vertex vertex;
+
+            float c = cosf(j * dTheta);
+            float s = sinf(j * dTheta);
+
+            vertex.Position = XMFLOAT3(r * c, y, r * s);
+            vertex.TexC.x = (float)j / sliceCount;
+            vertex.TexC.y = 1.0f - (float)i / stackCount;
+
+            // Cylinder can be parameterized as follows, where we introduce v
+            // parameter that goes in the same direction as the v tex-coord
+            // so that the bitangent goes in the same direction as the v tex-coord.
+            // Let r0 be the bottom radius and let r1 be the top radius.
+            // y(v) = h - hv for v in [0,1].
+            // r(v) = r1+(r0-r1)v.
+            // 
+            // x(t,v) = r(v)*cos(t)
+            // y(t,v) = h - hv
+            // z(t,v) = r(v)*sint(t)
+            // 
+            //  dx/dt = -r(v)*sin(t)
+            //  dy/dt = 0
+            //  dz/dt = +r(v)*cos(t)
+            //
+            //  dx/dv = (r0-r1)*cos(t)
+            //  dy/dv = -h
+            //  dz/dv = (r0-r1)*sin(t)
+        }
+    }
+}
