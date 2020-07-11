@@ -337,6 +337,30 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGeosphere(float radius, uin
 
         // Project onto sphere.
         XMVECTOR p = radius * n;
-    }
 
+        XMStoreFloat3(&meshData.Vertices[i].Position, p);
+        XMStoreFloat3(&meshData.Vertices[i].Normal, n);
+
+        // Derive texture coordinates from spherical coordinates.
+        float theta = atan2f(meshData.Vertices[i].Position.z, meshData.Vertices[i].Position.x);
+
+        // Put in [0,2pi].
+        if (theta < 0.0f)
+        {
+            theta += XM_2PI;
+        }
+
+        float phi = acosf(meshData.Vertices[i].Position.y / radius);
+        meshData.Vertices[i].TexC.x = theta / XM_2PI;
+        meshData.Vertices[i].TexC.y = phi / XM_PI;
+
+        // Partial derivative of P with respect to theta
+        meshData.Vertices[i].TangentU.x = -radius * sinf(phi) * sinf(theta);
+        meshData.Vertices[i].TangentU.y = 0.0f;
+        meshData.Vertices[i].TangentU.z = +radius * sinf(phi) * cosf(theta);
+
+        XMVECTOR T = XMLoadFloat3(&meshData.Vertices[i].TangentU);
+        XMStoreFloat3(&meshData.Vertices[i].TangentU, XMVector3Normalize(T));
+    }
+    return meshData;
 }
