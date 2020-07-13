@@ -365,6 +365,45 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGeosphere(float radius, uin
     return meshData;
 }
 
+void GeometryGenerator::BuildCylinderTopCap(float bottomRadius,
+    float topRadius, float height, uint32 sliceCount,
+    uint32 stackCount, MeshData& meshData
+)
+{
+    uint32 baseIndex = (uint32)meshData.Vertices.size();
+
+
+    float y = 0.5f * height;
+    float dTheta = 2.0f * XM_PI / sliceCount;
+
+    // Duplicate cap ring vertices because the texture coordinates and normals differ.
+    for (uint32 i = 0; i <= sliceCount; ++i)
+    {
+        float x = topRadius * cosf(i * dTheta);
+        float z = topRadius * sinf(i * dTheta);
+
+        // Scale down by the height to try and make top cap texture coordinate
+        // area proportional to base.
+        float u = x / height + 0.5f;
+        float v = z / height + 0.5f;
+
+        meshData.Vertices.push_back(Vertex(x, y, z, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v));
+    }
+
+    // Cap center vertex.
+    meshData.Vertices.push_back(Vertex(0.0f, y, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f));
+
+    // Index of center vertex.
+    uint32 centerIndex = (uint32)meshData.Vertices.size() - 1;
+
+    for (uint32 i = 0; i < sliceCount; ++i)
+    {
+        meshData.Indices32.push_back(centerIndex);
+        meshData.Indices32.push_back(baseIndex + i + 1);
+        meshData.Indices32.push_back(baseIndex + i);
+    }
+}
+
 GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount)
 {
     MeshData meshData;
@@ -428,6 +467,25 @@ GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius
             XMStoreFloat3(&vertex.Normal, N);
 
             meshData.Vertices.push_back(vertex);
+        }
+    }
+
+    // Add one because we duplicate the first and last vertex per ring
+    // since the texture coordinates are different.
+    uint32 ringVertexCount = sliceCount + 1;
+
+    // Compute indices for each stack.
+    for (uint32 i = 0; i < stackCount; ++i)
+    {
+        for (uint32 j = 0; j < sliceCount; ++j)
+        {
+            meshData.Indices32.push_back(i * ringVertexCount + j);
+            meshData.Indices32.push_back((i + 1) * ringVertexCount + j);
+            meshData.Indices32.push_back((i + 1) * ringVertexCount + (j + 1));
+
+            meshData.Indices32.push_back(i * ringVertexCount + j);
+            meshData.Indices32.push_back((i + 1) * ringVertexCount + (j + 1));
+            meshData.Indices32.push_back(i * ringVertexCount + j + 1);
         }
     }
 }
