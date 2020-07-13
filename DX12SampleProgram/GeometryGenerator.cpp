@@ -415,6 +415,19 @@ GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius
             //  dx/dv = (r0-r1)*cos(t)
             //  dy/dv = -h
             //  dz/dv = (r0-r1)*sin(t)
+
+            // This is unit length.
+            vertex.TangentU = XMFLOAT3(-s, 0.0f, c);
+
+            float dr = bottomRadius - topRadius;
+            XMFLOAT3 bitangent = (dr * c, -height, dr * s);
+
+            XMVECTOR T = XMLoadFloat3(&vertex.TangentU);
+            XMVECTOR B = XMLoadFloat3(&bitangent);
+            XMVECTOR N = XMVector3Normalize(XMVector3Cross(T, B));
+            XMStoreFloat3(&vertex.Normal, N);
+
+            meshData.Vertices.push_back(vertex);
         }
     }
 }
