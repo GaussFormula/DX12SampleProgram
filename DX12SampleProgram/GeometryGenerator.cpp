@@ -570,4 +570,71 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGrid(float width, float dep
     }
 
     // Create Indices.
+    meshData.Indices32.resize(static_cast<UINT64>(faceCount) * 3);
+
+    // Iterate over each quad and compute indices.
+    UINT64 k = 0;
+    for (uint32 i = 0; i < m - 1; i++)
+    {
+        for (uint32 j = 0; j < n - 1; j++)
+        {
+            meshData.Indices32[k] = i * n + j;
+            meshData.Indices32[k + 1] = i * n + j + 1;
+            meshData.Indices32[k + 2] = (i + 1) * n + j;
+
+            meshData.Indices32[k + 3] = (i + 1) * n + j;
+            meshData.Indices32[k + 4] = i * n + j + 1;
+            meshData.Indices32[k + 5] = (i + 1) * n + j + 1;
+
+            k += 6;// next quad
+        }
+    }
+
+    return meshData;
+}
+
+GeometryGenerator::MeshData GeometryGenerator::CreateQuad(float x, float y,
+    float w, float h, float depth
+)
+{
+    MeshData meshData;
+
+    meshData.Vertices.resize(4);
+    meshData.Indices32.resize(6);
+
+    // Position coordinates specified in NDC space.
+    meshData.Vertices[0] = Vertex(
+        x, y - h, depth,
+        0.0f, 0.0f, -1.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f
+    );
+
+    meshData.Vertices[1] = Vertex(
+        x, y, depth,
+        0.0f, 0.0f, -1.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f);
+
+    meshData.Vertices[2] = Vertex(
+        x + w, y, depth,
+        0.0f, 0.0f, -1.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f);
+
+    meshData.Vertices[3] = Vertex(
+        x + w, y - h, depth,
+        0.0f, 0.0f, -1.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f);
+
+    meshData.Indices32[0] = 0;
+    meshData.Indices32[1] = 1;
+    meshData.Indices32[2] = 2;
+
+    meshData.Indices32[3] = 0;
+    meshData.Indices32[4] = 2;
+    meshData.Indices32[5] = 3;
+
+    return meshData;
 }
