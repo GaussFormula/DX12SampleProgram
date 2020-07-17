@@ -638,3 +638,11 @@ GeometryGenerator::MeshData GeometryGenerator::CreateQuad(float x, float y,
 
     return meshData;
 }
+
+GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(
+    float stackCount,
+    float bottomSliceCount, float bottomRadius, 
+    float height)
+{
+    return CreateCylinder(bottomRadius, 0, height, bottomSliceCount, stackCount);
+}
