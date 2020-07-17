@@ -100,7 +100,7 @@ public:
     MeshData CreateQuad(float x, float y, float w, float h, float depth);
 
     // Creates a pyramid.
-    MeshData CreatePyramid(float stackCount,float bottomSliceCount, float bottomRadius, float height);
+    MeshData CreatePyramid(uint32 stackCount,uint32 bottomSliceCount, float bottomRadius, float height);
 
 private:
     void Subdivide(MeshData& meshData);

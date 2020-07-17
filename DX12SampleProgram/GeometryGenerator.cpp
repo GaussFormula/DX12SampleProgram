@@ -80,7 +80,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateBox(float width, float heig
     i[30] = 20; i[31] = 21; i[32] = 22;
     i[33] = 20; i[34] = 22; i[35] = 23;
 
-    meshData.Indices32.assign(&i[0], &v[36]);
+    meshData.Indices32.assign(&i[0], &i[36]);
 
     // Put a cap on the number of subdivisions.
 
@@ -200,7 +200,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateSphere(float radius, uint32
     return meshData;
 }
 
-GeometryGenerator::Vertex GeometryGenerator::MidPoint(Vertex& v0, Vertex& v1)
+GeometryGenerator::Vertex GeometryGenerator::MidPoint(const Vertex& v0, const Vertex& v1)
 {
     XMVECTOR p0 = XMLoadFloat3(&v0.Position);
     XMVECTOR p1 = XMLoadFloat3(&v1.Position);
@@ -218,7 +218,7 @@ GeometryGenerator::Vertex GeometryGenerator::MidPoint(Vertex& v0, Vertex& v1)
     // Compute the midpoints of all the attributes. Vectors need to be normalized
     // since linear interpolating can make them not unit length.
     XMVECTOR pos = 0.5f * (p0 + p1);
-    XMVECTOR normal = XMVector3Normalize(0.5f(n0 + n1));
+    XMVECTOR normal = XMVector3Normalize(0.5f*(n0 + n1));
     XMVECTOR tangent = XMVector3Normalize(0.5f * (tan0 + tan1));
     XMVECTOR tex = 0.5f * (tex0 + tex1);
 
@@ -496,7 +496,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius
             vertex.TangentU = XMFLOAT3(-s, 0.0f, c);
 
             float dr = bottomRadius - topRadius;
-            XMFLOAT3 bitangent = (dr * c, -height, dr * s);
+            XMFLOAT3 bitangent = XMFLOAT3(dr * c, -height, dr * s);
 
             XMVECTOR T = XMLoadFloat3(&vertex.TangentU);
             XMVECTOR B = XMLoadFloat3(&bitangent);
@@ -640,8 +640,8 @@ GeometryGenerator::MeshData GeometryGenerator::CreateQuad(float x, float y,
 }
 
 GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(
-    float stackCount,
-    float bottomSliceCount, float bottomRadius, 
+    uint32 stackCount,
+    uint32 bottomSliceCount, float bottomRadius, 
     float height)
 {
     return CreateCylinder(bottomRadius, 0, height, bottomSliceCount, stackCount);
