@@ -552,20 +552,20 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGrid(float width, float dep
 
     meshData.Vertices.resize(vertexCount);
 
-    for (uint32 i = 0; i < m; i++)
+    for (UINT64 i = 0; i < m; i++)
     {
         float z = halfDepth - i * dz;
-        for (uint32 j = 0; j < n; j++)
+        for (UINT64 j = 0; j < n; j++)
         {
             float x = -halfWidth + j * dx;
 
-            meshData.Vertices[i * n + j].Position = XMFLOAT3(x, 0.0f, z);
-            meshData.Vertices[i * n + j].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
-            meshData.Vertices[i * n + j].TangentU = XMFLOAT3(1.0f, 0.0f, 0.0f);
+            meshData.Vertices[i * static_cast<UINT64>(n) + j].Position = XMFLOAT3(x, 0.0f, z);
+            meshData.Vertices[i * static_cast<UINT64>(n) + j].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+            meshData.Vertices[i * static_cast<UINT64>(n) + j].TangentU = XMFLOAT3(1.0f, 0.0f, 0.0f);
 
             // Stretch texture over grid.
-            meshData.Vertices[i * n + j].TexC.x = j * du;
-            meshData.Vertices[i * n + j].TexC.y = i * dv;
+            meshData.Vertices[i * static_cast<UINT64>(n) + j].TexC.x = j * du;
+            meshData.Vertices[i * static_cast<UINT64>(n) + j].TexC.y = i * dv;
         }
     }
 
