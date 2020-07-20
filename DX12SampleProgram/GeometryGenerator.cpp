@@ -250,11 +250,11 @@ void GeometryGenerator::Subdivide(MeshData& meshData)
     // v0    m2     v2
 
     uint32 numTris = (uint32)inputCopy.Indices32.size() / 3;
-    for (UINT64 i = 0; i < (UINT64)numTris; ++i)
+    for (unsigned int i = 0; i < (UINT64)numTris; ++i)
     {
-        Vertex v0 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 0]];
-        Vertex v1 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 1]];
-        Vertex v2 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 2]];
+        Vertex v0 = inputCopy.Vertices[inputCopy.Indices32[(UINT64)i * 3 + 0]];
+        Vertex v1 = inputCopy.Vertices[inputCopy.Indices32[(UINT64)i * 3 + 1]];
+        Vertex v2 = inputCopy.Vertices[inputCopy.Indices32[(UINT64)i * 3 + 2]];
 
         // Generate the midpoints.
 

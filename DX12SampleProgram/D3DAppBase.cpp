@@ -122,7 +122,7 @@ bool D3DAppBase::InitMainWindow()
     }
 
     // Compute window rectangle dimensions based on requested client area dimensions.
-    RECT R = { 0,0,m_width,m_height };
+    RECT R = { 0,0,static_cast<LONG>(m_width),static_cast<LONG>(m_height) };
     AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
     int width = R.right - R.left;
     int height = R.bottom - R.top;
