@@ -269,6 +269,11 @@ LRESULT D3DAppBase::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             Set4xMsaaState(!m_4xMsaaState);
         }
+        else if ((int)wParam == VK_F1)
+        {
+            m_appPaused = false;
+            m_gameTimer.Start();
+        }
         return 0;
     }
     return DefWindowProc(hwnd, msg, wParam, lParam);
