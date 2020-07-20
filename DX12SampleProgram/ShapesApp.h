@@ -9,7 +9,6 @@
 #define IS_ENABLE_SHAPE_APP 0
 #endif // !IS_ENABLE_SHAPE_APP
 
-
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -50,7 +49,6 @@ public:
     int BaseVertexLocation = 0;
 };
 
-
 #if IS_ENABLE_SHAPE_APP
 class ShapesApp :public D3DAppBase
 {
@@ -75,6 +73,25 @@ private:
     void OnKeyboardInput(const GameTimer& gt);
     void UpdateCamera(const GameTimer& gt);
     void UpdateObjectCBs(const GameTimer& gt);
-    void UpdateMainPassCBs(const GameTimer& gt);
+    void UpdateMainPassCB(const GameTimer& gt);
+
+    void BuildConstantDescriptorHeaps();
+    void BuildConstantBufferAndViews();
+    void BuildRootSignature();
+    void BuildShadersAndInputLayout();
+    void BuildShapesGeometry();
+    void BuildPSOs();
+    void BuildFrameResources();
+    void BuildRenderItems();
+    void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& items);
+
+private:
+    std::vector<std::unique_ptr<FrameResource>> m_frameResources;
+    FrameResource* m_currentFrameResource = nullptr;
+    int m_currentFrameResourceIndex = 0;
+
+    ComPtr<ID3D12RootSignature> m_rootSignature = nullptr;
+    ComPtr<ID3D12DescriptorHeap> m_cbvHeap = nullptr;
+    ComPtr<ID3D12DescriptorHeap> m_srvHeap = nullptr;
 };
 #endif
