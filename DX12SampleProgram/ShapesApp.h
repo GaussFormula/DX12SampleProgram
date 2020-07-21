@@ -97,5 +97,27 @@ private:
     std::unordered_map<std::string, std::unique_ptr<MeshGeometry>>  m_geometries;
     std::unordered_map<std::string, ComPtr<ID3DBlob>>    m_shaders;
     std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>    m_PSOs;
+
+    std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout;
+
+    // List of all the render items.
+    std::vector<std::unique_ptr<RenderItem>> m_allItems;
+
+    // Render items divided by PSO.
+    std::vector<RenderItem*> m_opaqueRenderItems;
+
+    PassConstants m_mainPassCB;
+
+    UINT m_passCbvOffset = 0;
+
+    bool m_isWireFrame = false;
+
+    XMFLOAT3 m_eyePos = { 0.0f,0.0f,0.0f };
+    XMMATRIX m_view = DirectX::XMMatrixIdentity();
+    XMMATRIX m_proj = DirectX::XMMatrixIdentity();
+
+    float m_theta = 1.5f * XM_PI;
+    float m_phi = 0.2f * XM_PI;
+    float m_radius = 15.0f;
 };
 #endif
