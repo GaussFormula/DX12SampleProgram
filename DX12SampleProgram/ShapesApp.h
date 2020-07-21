@@ -93,5 +93,9 @@ private:
     ComPtr<ID3D12RootSignature> m_rootSignature = nullptr;
     ComPtr<ID3D12DescriptorHeap> m_cbvHeap = nullptr;
     ComPtr<ID3D12DescriptorHeap> m_srvHeap = nullptr;
+
+    std::unordered_map<std::string, std::unique_ptr<MeshGeometry>>  m_geometries;
+    std::unordered_map<std::string, ComPtr<ID3DBlob>>    m_shaders;
+    std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>    m_PSOs;
 };
 #endif
