@@ -6,7 +6,7 @@
 #include "FrameResource.h"
 
 #ifndef IS_ENABLE_SHAPE_APP
-#define IS_ENABLE_SHAPE_APP 0
+#define IS_ENABLE_SHAPE_APP 1
 #endif // !IS_ENABLE_SHAPE_APP
 
 using Microsoft::WRL::ComPtr;
