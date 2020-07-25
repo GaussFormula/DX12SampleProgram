@@ -148,6 +148,91 @@ void ShapesApp::BuildShapesGeometry()
     m_geometries[geo->Name] = std::move(geo);
 }
 
+void ShapesApp::BuildPSOs()
+{
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
+    // PSO for opaque objects.
+
+    ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+    opaquePsoDesc.InputLayout = { m_inputLayout.data(),(UINT)m_inputLayout.size() };
+    opaquePsoDesc.pRootSignature = m_rootSignature.Get();
+    opaquePsoDesc.VS = CD3DX12_SHADER_BYTECODE(m_shaders["standardVS"].Get());
+    opaquePsoDesc.PS = CD3DX12_SHADER_BYTECODE(m_shaders["opaquePS"].Get());
+    opaquePsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    opaquePsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    opaquePsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    opaquePsoDesc.SampleMask = UINT_MAX;
+    opaquePsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    opaquePsoDesc.NumRenderTargets = 1;
+    opaquePsoDesc.RTVFormats[0] = m_backBufferFormat;
+    opaquePsoDesc.SampleDesc.Count = m_4xMsaaState ? 4 : 1;
+    opaquePsoDesc.SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
+    opaquePsoDesc.DSVFormat = m_depthStencilFormat;
+    ThrowIfFailed(m_device->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&m_PSOs["opaque"])));
+
+    // PSO for opaque wireframe objects.
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
+    opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    ThrowIfFailed(m_device->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&m_PSOs["opaque_wireframe"])));
+}
+
+void ShapesApp::BuildRenderItems()
+{
+    UINT objectCBufferIndex = 0;
+    auto sphereRenderItem = std::make_unique<RenderItem>();
+    sphereRenderItem->World = XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f);
+    sphereRenderItem->ObjectConstantBufferIndex = objectCBufferIndex++;
+    sphereRenderItem->Geo = m_geometries["shapeGeo"].get();
+    sphereRenderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    sphereRenderItem->IndexCount = sphereRenderItem->Geo->DrawArags["sphere"].IndexCount;
+    sphereRenderItem->BaseVertexLocation = sphereRenderItem->Geo->DrawArags["sphere"].BaseVertexLocation;
+    sphereRenderItem->StartIndexLocation = sphereRenderItem->Geo->DrawArags["sphere"].StartIndexCount;
+
+    m_allItems.push_back(std::move(sphereRenderItem));
+
+    auto pyramidRenderItem = std::make_unique<RenderItem>();
+    pyramidRenderItem->World = DirectX::XMMatrixIdentity();
+    pyramidRenderItem->ObjectConstantBufferIndex = objectCBufferIndex++;
+    pyramidRenderItem->Geo = m_geometries["shapeGeo"].get();
+    pyramidRenderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    pyramidRenderItem->IndexCount = pyramidRenderItem->Geo->DrawArags["pyramid"].IndexCount;
+    pyramidRenderItem->StartIndexLocation = pyramidRenderItem->Geo->DrawArags["pyramid"].StartIndexCount;
+    pyramidRenderItem->BaseVertexLocation = pyramidRenderItem->Geo->DrawArags["pyramid"].BaseVertexLocation;
+    m_allItems.push_back(std::move(pyramidRenderItem));
+
+    for (auto& e : m_allItems)
+    {
+        m_opaqueRenderItems.push_back(e.get());
+    }
+}
+
+void ShapesApp::BuildFrameResources()
+{
+    for (int i = 0; i < gNumFrameResources; ++I)
+    {
+        m_frameResources.push_back(std::make_unique<FrameResource>(m_device.Get(), 1, (UINT)m_allItems.size()));
+    }
+}
+
+void ShapesApp::BuildConstantDescriptorHeaps()
+{
+    UINT objCount = (UINT)m_opaqueRenderItems.size();
+
+    // Need a CBV descriptor for each object for each frame resource.
+    // +1 for the per pass CBV for each frame resource.
+    UINT numDescriptors = (objCount + 1) * gNumFrameResources;
+
+    // Svae an offset to the start of the pass CBVs. These are the last 3 descriptors.
+    m_passCbvOffset = objCount * gNumFrameResources;
+
+    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+    cbvHeapDesc.NumDescriptors = numDescriptors;
+    cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    cbvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+}
+
 bool ShapesApp::Initialize()
 {
     if (!D3DAppBase::Initialize())
