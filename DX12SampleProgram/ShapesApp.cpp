@@ -312,4 +312,40 @@ bool ShapesApp::Initialize()
 
     return true;
 }
+
+void ShapesApp::OnResize()
+{
+    D3DAppBase::OnResize();
+
+    // The window resized, so update the aspect ratio and recompute the projection matrix.
+    m_proj = XMMatrixPerspectiveFovLH(0.25f * XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
+}
+
+void ShapesApp::OnKeyboardInput(const GameTimer& gt)
+{
+    if (GetAsyncKeyState('1') & 0x8000)
+    {
+        m_isWireFrame = true;
+    }
+    else
+    {
+        m_isWireFrame = false;
+    }
+}
+
+void ShapesApp::UpdateCamera(const GameTimer& gt)
+{
+    // Convert Spherical to Cartesian coordinates.
+    m_eyePos.x = m_radius * sinf(m_phi) * cosf(m_theta);
+    m_eyePos.y = m_radius * cosf(m_phi);
+    m_eyePos.z = m_radius * sinf(m_phi) * sinf(m_theta);
+
+    // Build view matrix.
+    XMVECTOR pos = XMVectorSet(m_eyePos.x, m_eyePos.y, m_eyePos.z, 1.0f);
+    XMVECTOR target = XMVectorZero();
+    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+    m_view = XMMatrixLookAtLH(pos, target, up);
+}
+
 #endif
