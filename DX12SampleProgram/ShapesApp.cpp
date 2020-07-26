@@ -208,7 +208,7 @@ void ShapesApp::BuildRenderItems()
 
 void ShapesApp::BuildFrameResources()
 {
-    for (int i = 0; i < gNumFrameResources; ++I)
+    for (int i = 0; i < gNumFrameResources; ++i)
     {
         m_frameResources.push_back(std::make_unique<FrameResource>(m_device.Get(), 1, (UINT)m_allItems.size()));
     }
@@ -346,6 +346,125 @@ void ShapesApp::UpdateCamera(const GameTimer& gt)
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
     m_view = XMMatrixLookAtLH(pos, target, up);
+}
+
+void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
+{
+    auto currentObjectConstantBuffer = m_currentFrameResource->m_objCB.get();
+    for (auto& e : m_allItems)
+    {
+        // Only update the cbuffer data if the constants have changed.
+        // This needs to be tracked per frame resource.
+        if (e->NumFrameDirty > 0)
+        {
+            ObjectConstants objConstants;
+            objConstants.World = XMMatrixTranspose(e->World);
+
+            currentObjectConstantBuffer->CopyData(e->ObjectConstantBufferIndex, objConstants);
+
+            // Next FrameResource need to be updated too.
+            e->NumFrameDirty--;
+        }
+    }
+}
+
+void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
+{
+    XMMATRIX viewProj = XMMatrixMultiply(m_view, m_proj);
+    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(m_view), m_view);
+    XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(m_proj), m_proj);
+    XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
+
+    m_mainPassCB.View = XMMatrixTranspose(m_view);
+    m_mainPassCB.InvView = XMMatrixTranspose(invView);
+    m_mainPassCB.Proj = XMMatrixTranspose(m_proj);
+    m_mainPassCB.InvProj = XMMatrixTranspose(invProj);
+    m_mainPassCB.ViewProj = XMMatrixTranspose(viewProj);
+    m_mainPassCB.InvViewProj = XMMatrixTranspose(invViewProj);
+
+    m_mainPassCB.EyePosW = m_eyePos;
+    m_mainPassCB.RenderTargetSize = XMFLOAT2((float)m_width, (float)m_height);
+    m_mainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / m_width, 1.0f / m_height);
+    m_mainPassCB.NearZ = 1.0f;
+    m_mainPassCB.FarZ = 1000.0f;
+    m_mainPassCB.DeltaTime = gt.DeltaTime();
+    m_mainPassCB.TotalTime = gt.TotalTime();
+
+    auto currentPassCB = m_currentFrameResource->m_passCB.get();
+    currentPassCB->CopyData(0, m_mainPassCB);
+}
+
+void ShapesApp::Update(const GameTimer& gt)
+{
+    OnKeyboardInput(gt);
+    UpdateCamera(gt);
+
+    // Cycle through the circular frame resource array.
+    m_currentFrameResourceIndex = (m_currentFrameResourceIndex + 1) % gNumFrameResources;
+    m_currentFrameResource = m_frameResources[m_currentFrameResourceIndex].get();
+
+    // Has the GPU finished processing the commands of the current frame resources?
+    // If not, wait until the GPU has completed commands up to this fence point.
+    if (m_currentFrameResource->m_fence != 0 && m_fence->GetCompletedValue() < m_currentFrameResource->m_fence)
+    {
+        HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+        ThrowIfFailed(m_fence->SetEventOnCompletion(m_currentFrameResource->m_fence, eventHandle));
+        WaitForSingleObject(eventHandle, INFINITE);
+        CloseHandle(eventHandle);
+    }
+
+    UpdateObjectCBs(gt);
+    UpdateMainPassCB(gt);
+}
+
+void ShapesApp::Draw(const GameTimer& gt)
+{
+    auto cmdListAlloc = m_currentFrameResource->m_commandAllocator;
+
+    // Reuse the memory associated with command recording.
+    // We can only reset when the associated command list have finished execution on the GPU.
+    ThrowIfFailed(m_commandAllocator->Reset());
+
+    // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+    // Reusing the command list reuses memory.
+    if (m_isWireFrame)
+    {
+        ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_PSOs["opaque_wireframe"].Get()));
+    }
+    else
+    {
+        ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_PSOs["opaque"].Get()));
+    }
+
+    m_commandList->RSSetViewports(1, &m_screenViewport);
+    m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
+    // Indicate a state transition on the resource usage.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        CurrentBackBuffer(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+    ));
+
+    // Clear the back buffer and depth buffer.
+    m_commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightPink, 0, nullptr);
+    m_commandList->ClearDepthStencilView(m_dsvHeap->GetCPUDescriptorHandleForHeapStart(),
+        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    // Specify the buffers we are going to render to.
+    m_commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { m_cbvHeap.Get() };
+    m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+    UINT passCbvIndex = m_passCbvOffset + (UINT)m_currentFrameResourceIndex;
+    auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+    passCbvHandle.Offset(passCbvIndex, m_cbvSrvUavDescriptorSize);
+    m_commandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
+    
+    DrawRenderItems(m_commandList.Get(), m_opaqueRenderItems);
 }
 
 #endif
