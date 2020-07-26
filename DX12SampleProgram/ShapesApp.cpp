@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ShapesApp.h"
-
+#if IS_ENABLE_SHAPE_APP
 ShapesApp::ShapesApp(HINSTANCE hInstance)
     :D3DAppBase(hInstance)
 {}
@@ -222,7 +222,7 @@ void ShapesApp::BuildConstantDescriptorHeaps()
     // +1 for the per pass CBV for each frame resource.
     UINT numDescriptors = (objCount + 1) * gNumFrameResources;
 
-    // Svae an offset to the start of the pass CBVs. These are the last 3 descriptors.
+    // Save an offset to the start of the pass CBVs. These are the last 3 descriptors.
     m_passCbvOffset = objCount * gNumFrameResources;
 
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
@@ -231,6 +231,56 @@ void ShapesApp::BuildConstantDescriptorHeaps()
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     cbvHeapDesc.NodeMask = 0;
     ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+}
+
+void ShapesApp::BuildConstantBufferAndViews()
+{
+    UINT objectCBByteSize = CalculateConstantBufferByteSize(sizeof(ObjectConstants));
+    UINT objCount = (UINT)m_opaqueRenderItems.size();
+
+    // Need a CBV descriptor for each object for each frame resources.
+    for (UINT frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
+    {
+        auto objectCB = m_frameResources[frameIndex]->m_objCB->Resource();
+        for (UINT i = 0; i < objCount; ++i)
+        {
+            D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
+
+            // Offset to the ith object constant buffer in the buffer.
+            cbAddress += i * objectCBByteSize;
+
+            // Offset to the object cbv in the descriptor heap.
+            int heapIndex = frameIndex * objCount + i;
+            auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+            handle.Offset(heapIndex, m_cbvSrvUavDescriptorSize);
+
+            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+            cbvDesc.BufferLocation = cbAddress;
+            cbvDesc.SizeInBytes = objectCBByteSize;
+
+            m_device->CreateConstantBufferView(&cbvDesc, handle);
+        }
+    }
+
+    UINT passCBByteSize = CalculateConstantBufferByteSize(sizeof(PassConstants));
+
+    // Last three descriptors are the pass CBVs for each frame resource.
+    for (UINT frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
+    {
+        auto passCB = m_frameResources[frameIndex]->m_passCB->Resource();
+        D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
+
+        // Offset to the pass cbv in the descriptor heap.
+        int heapIndex = m_passCbvOffset + frameIndex;
+        auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+        handle.Offset(heapIndex, m_cbvSrvUavDescriptorSize);
+
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+        cbvDesc.BufferLocation = cbAddress;
+        cbvDesc.SizeInBytes = passCBByteSize;
+
+        m_device->CreateConstantBufferView(&cbvDesc, handle);
+    }
 }
 
 bool ShapesApp::Initialize()
@@ -242,4 +292,24 @@ bool ShapesApp::Initialize()
 
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+
+    BuildRootSignature();
+    BuildShadersAndInputLayout();
+    BuildShapesGeometry();
+    BuildRenderItems();
+    BuildFrameResources();
+    BuildConstantDescriptorHeaps();
+    BuildConstantBufferAndViews();
+    BuildPSOs();
+
+    // Execute the initialization commands.
+    ThrowIfFailed(m_commandList->Close());
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // Wait until initialization is completed.
+    FlushCommandQueue();
+
+    return true;
 }
+#endif
