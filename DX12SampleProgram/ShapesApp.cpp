@@ -60,7 +60,7 @@ void ShapesApp::BuildShadersAndInputLayout()
 
     m_inputLayout =
     {
-        {"POSITION",0,DXGI_FORMAT_R32G32_FLOAT,0,0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+        {"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
         {"COLOR",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,12,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0}
     };
 }
@@ -180,7 +180,7 @@ void ShapesApp::BuildRenderItems()
 {
     UINT objectCBufferIndex = 0;
     auto sphereRenderItem = std::make_unique<RenderItem>();
-    sphereRenderItem->World = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f);
+    sphereRenderItem->World = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
     sphereRenderItem->ObjectConstantBufferIndex = objectCBufferIndex++;
     sphereRenderItem->Geo = m_geometries["shapeGeo"].get();
     sphereRenderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -191,7 +191,7 @@ void ShapesApp::BuildRenderItems()
     m_allItems.push_back(std::move(sphereRenderItem));
 
     auto pyramidRenderItem = std::make_unique<RenderItem>();
-    pyramidRenderItem->World = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, -0.5f, 0.0f);
+    pyramidRenderItem->World = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(1.0f, -0.5f, 0.0f);
     pyramidRenderItem->ObjectConstantBufferIndex = objectCBufferIndex++;
     pyramidRenderItem->Geo = m_geometries["shapeGeo"].get();
     pyramidRenderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -417,7 +417,7 @@ void ShapesApp::Update(const GameTimer& gt)
 
     UpdateObjectCBs(gt);
     UpdateMainPassCB(gt);
-    result = XMVector3TransformCoord(XMVectorSet(-0.75f,-0.25f,5.0f,1.0f), m_viewProj);
+    result = XMVector3TransformCoord(XMVectorSet(-0.5f,-0.5f,-0.5f,1.0f), m_viewProj);
     XMStoreFloat4(&result2, result);
 }
 
@@ -482,7 +482,8 @@ void ShapesApp::Draw(const GameTimer& gt)
         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
     // Specify the buffers we are going to render to.
-    m_commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+    m_commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, 
+        &m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
     ID3D12DescriptorHeap* descriptorHeaps[] = { m_cbvHeap.Get() };
     m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
