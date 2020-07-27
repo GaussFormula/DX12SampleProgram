@@ -6,7 +6,7 @@
 #include "FrameResource.h"
 
 #ifndef IS_ENABLE_SHAPE_APP
-#define IS_ENABLE_SHAPE_APP 0
+#define IS_ENABLE_SHAPE_APP 1
 #endif // !IS_ENABLE_SHAPE_APP
 
 using Microsoft::WRL::ComPtr;
@@ -118,6 +118,12 @@ private:
 
     float m_theta = 1.5f * XM_PI;
     float m_phi = 0.2f * XM_PI;
-    float m_radius = 15.0f;
+    float m_radius = 5.0f;
+
+    POINT m_lastMousePos;
+
+    XMMATRIX m_viewProj;
+    XMVECTOR result;
+    XMFLOAT4 result2;
 };
 #endif

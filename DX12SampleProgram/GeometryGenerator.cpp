@@ -8,7 +8,10 @@ GeometryGenerator::MeshData GeometryGenerator::CreateBox(float width, float heig
 {
     MeshData meshData;
 
-    // Create the verticies.
+    //
+    // Create the vertices.
+    //
+
     Vertex v[24];
 
     float w2 = 0.5f * width;
@@ -53,10 +56,13 @@ GeometryGenerator::MeshData GeometryGenerator::CreateBox(float width, float heig
 
     meshData.Vertices.assign(&v[0], &v[24]);
 
+    //
     // Create the indices.
+    //
+
     uint32 i[36];
 
-    // Fill in the front face index data.
+    // Fill in the front face index data
     i[0] = 0; i[1] = 1; i[2] = 2;
     i[3] = 0; i[4] = 2; i[5] = 3;
 
@@ -83,14 +89,17 @@ GeometryGenerator::MeshData GeometryGenerator::CreateBox(float width, float heig
     meshData.Indices32.assign(&i[0], &i[36]);
 
     // Put a cap on the number of subdivisions.
-
     numSubdivisions = std::min<uint32>(numSubdivisions, 6u);
 
     for (uint32 i = 0; i < numSubdivisions; ++i)
-    {
         Subdivide(meshData);
-    }
+
     return meshData;
+}
+
+GeometryGenerator::MeshData GeometryGenerator::CreateFixedBox()
+{
+    return CreateBox(1.0f, 1.0f, 1.0f, 1);
 }
 
 GeometryGenerator::MeshData GeometryGenerator::CreateSphere(float radius, uint32 sliceCount, uint32 stackCount)

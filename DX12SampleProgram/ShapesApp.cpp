@@ -55,8 +55,8 @@ void ShapesApp::BuildShadersAndInputLayout()
 #else
     UINT compileFlags = 0;
 #endif
-    ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &m_shaders["standardVS"], nullptr));
-    ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &m_shaders["opaquePS"], nullptr));
+    ThrowIfFailed(D3DCompileFromFile(L"color.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &m_shaders["standardVS"], nullptr));
+    ThrowIfFailed(D3DCompileFromFile(L"color.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &m_shaders["opaquePS"], nullptr));
 
     m_inputLayout =
     {
@@ -69,7 +69,7 @@ void ShapesApp::BuildShapesGeometry()
 {
     GeometryGenerator geoGen;
     GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
-    GeometryGenerator::MeshData pyramid = geoGen.CreatePyramid(20, 20, 0.5f, 3.0f);
+    GeometryGenerator::MeshData pyramid = geoGen.CreateFixedBox();
 
     // We are concatenating all the geometry into one big vertex/index buffer.
     // So define the regions in the buffer each submesh covers.
@@ -180,7 +180,7 @@ void ShapesApp::BuildRenderItems()
 {
     UINT objectCBufferIndex = 0;
     auto sphereRenderItem = std::make_unique<RenderItem>();
-    sphereRenderItem->World = XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f);
+    sphereRenderItem->World = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f);
     sphereRenderItem->ObjectConstantBufferIndex = objectCBufferIndex++;
     sphereRenderItem->Geo = m_geometries["shapeGeo"].get();
     sphereRenderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -191,7 +191,7 @@ void ShapesApp::BuildRenderItems()
     m_allItems.push_back(std::move(sphereRenderItem));
 
     auto pyramidRenderItem = std::make_unique<RenderItem>();
-    pyramidRenderItem->World = DirectX::XMMatrixIdentity();
+    pyramidRenderItem->World = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, -0.5f, 0.0f);
     pyramidRenderItem->ObjectConstantBufferIndex = objectCBufferIndex++;
     pyramidRenderItem->Geo = m_geometries["shapeGeo"].get();
     pyramidRenderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -247,7 +247,7 @@ void ShapesApp::BuildConstantBufferAndViews()
             D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
 
             // Offset to the ith object constant buffer in the buffer.
-            cbAddress += i * objectCBByteSize;
+            cbAddress += (UINT64)i * objectCBByteSize;
 
             // Offset to the object cbv in the descriptor heap.
             int heapIndex = frameIndex * objCount + i;
@@ -342,6 +342,7 @@ void ShapesApp::UpdateCamera(const GameTimer& gt)
 
     // Build view matrix.
     XMVECTOR pos = XMVectorSet(m_eyePos.x, m_eyePos.y, m_eyePos.z, 1.0f);
+    //XMVECTOR pos = XMVectorSet(1.5f, 0.0f, 0.0f, 1.0f);
     XMVECTOR target = XMVectorZero();
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -371,6 +372,7 @@ void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
 void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 {
     XMMATRIX viewProj = XMMatrixMultiply(m_view, m_proj);
+    m_viewProj = viewProj;
     XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(m_view), m_view);
     XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(m_proj), m_proj);
     XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
@@ -407,7 +409,7 @@ void ShapesApp::Update(const GameTimer& gt)
     // If not, wait until the GPU has completed commands up to this fence point.
     if (m_currentFrameResource->m_fence != 0 && m_fence->GetCompletedValue() < m_currentFrameResource->m_fence)
     {
-        HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+        HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
         ThrowIfFailed(m_fence->SetEventOnCompletion(m_currentFrameResource->m_fence, eventHandle));
         WaitForSingleObject(eventHandle, INFINITE);
         CloseHandle(eventHandle);
@@ -415,6 +417,34 @@ void ShapesApp::Update(const GameTimer& gt)
 
     UpdateObjectCBs(gt);
     UpdateMainPassCB(gt);
+    result = XMVector3TransformCoord(XMVectorSet(-0.75f,-0.25f,5.0f,1.0f), m_viewProj);
+    XMStoreFloat4(&result2, result);
+}
+
+void ShapesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& RenderItems)
+{
+    UINT objCBByteSize = CalculateConstantBufferByteSize(sizeof(ObjectConstants));
+
+    auto objectCB = m_currentFrameResource->m_objCB->Resource();
+
+    // For each render item...
+    for (size_t i = 0; i < RenderItems.size(); ++i)
+    {
+        auto ri = RenderItems[i];
+        cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView());
+        cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
+        cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
+
+        // Offset to the CBV in the descriptor heap for this object 
+        // and for this frame resource.
+        UINT cbvIndex = m_currentFrameResourceIndex * (UINT)m_opaqueRenderItems.size() + ri->ObjectConstantBufferIndex;
+        auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+        cbvHandle.Offset(cbvIndex, m_cbvSrvUavDescriptorSize);
+
+        cmdList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+
+        cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+    }
 }
 
 void ShapesApp::Draw(const GameTimer& gt)
@@ -423,17 +453,17 @@ void ShapesApp::Draw(const GameTimer& gt)
 
     // Reuse the memory associated with command recording.
     // We can only reset when the associated command list have finished execution on the GPU.
-    ThrowIfFailed(m_commandAllocator->Reset());
+    ThrowIfFailed(cmdListAlloc->Reset());
 
     // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
     // Reusing the command list reuses memory.
     if (m_isWireFrame)
     {
-        ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_PSOs["opaque_wireframe"].Get()));
+        ThrowIfFailed(m_commandList->Reset(cmdListAlloc.Get(), m_PSOs["opaque_wireframe"].Get()));
     }
     else
     {
-        ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_PSOs["opaque"].Get()));
+        ThrowIfFailed(m_commandList->Reset(cmdListAlloc.Get(), m_PSOs["opaque"].Get()));
     }
 
     m_commandList->RSSetViewports(1, &m_screenViewport);
@@ -448,7 +478,7 @@ void ShapesApp::Draw(const GameTimer& gt)
 
     // Clear the back buffer and depth buffer.
     m_commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightPink, 0, nullptr);
-    m_commandList->ClearDepthStencilView(m_dsvHeap->GetCPUDescriptorHandleForHeapStart(),
+    m_commandList->ClearDepthStencilView(DepthStencilView(),
         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
     // Specify the buffers we are going to render to.
@@ -465,6 +495,73 @@ void ShapesApp::Draw(const GameTimer& gt)
     m_commandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
     
     DrawRenderItems(m_commandList.Get(), m_opaqueRenderItems);
+
+    // Indicate a state transition on the resource usage.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        CurrentBackBuffer(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT
+    ));
+
+    // Done recording commands.
+    ThrowIfFailed(m_commandList->Close());
+
+    // Add the command list to the queue for execution.
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // Swap the back and front buffers.
+    ThrowIfFailed(m_swapchain->Present(0, 0));
+    m_currentBackBufferIndex = (m_currentBackBufferIndex + 1) % m_swapChainBufferCount;
+
+    // Advance the fence value to mark commands up to this fence point.
+    m_currentFrameResource->m_fence = ++m_currentFence;
+
+    // Add an instruction to the command queue to set a new fence point.
+    // Because we are on the GPU time line, the new fence point won't be 
+    // set until the GPU finishes processing all the commands prior to this Signal().
+    m_commandQueue->Signal(m_fence.Get(), m_currentFence);
+}
+
+void ShapesApp::OnMouseDown(WPARAM btnState, int x, int y)
+{
+    m_lastMousePos.x = x;
+    m_lastMousePos.y = y;
+
+    SetCapture(m_hMainWnd);
+}
+
+void ShapesApp::OnMouseUp(WPARAM btnState, int x, int y)
+{
+    ReleaseCapture();
+}
+
+void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
+{
+    if ((btnState & MK_LBUTTON) != 0)
+    {
+        // Make each pixel correspond to a quarter of a degree.
+        float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_lastMousePos.x));
+        float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_lastMousePos.y));
+
+        // Update angles based on input to orbit camera around box.
+        m_theta += dx;
+        m_phi += dy;
+
+    }
+    else if ((btnState & MK_RBUTTON) != 0)
+    {
+        // Make each pixel correspond to 0.2 unit in the scene.
+        float dx = 0.05f * static_cast<float>(x - m_lastMousePos.x);
+        float dy = 0.05f * static_cast<float>(y - m_lastMousePos.y);
+
+        // Update the camera radius based on input.
+        m_radius += dx - dy;
+
+    }
+
+    m_lastMousePos.x = x;
+    m_lastMousePos.y = y;
 }
 
 #endif

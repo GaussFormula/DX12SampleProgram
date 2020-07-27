@@ -66,6 +66,7 @@ public:
                     m_indices16[i] = static_cast<uint16>(Indices32[i]);
                 }
             }
+            return m_indices16;
         }
 
     private:
@@ -75,6 +76,8 @@ public:
     // Create a box centered at the origin with the given dimensions, where
     // each face has m rows and n column of vertices.
     MeshData CreateBox(float width, float height, float depth, uint32 numSubdivisions);
+
+    MeshData CreateFixedBox();
 
     // Create a sphere centered at the origin with the given radius.
     // The slices and stacks parameters control the degree of tessellation.

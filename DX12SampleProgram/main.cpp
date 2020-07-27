@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "BoxApp.h"
+#include "ShapesApp.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, int showCmd)
 {
@@ -9,7 +10,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 #endif
 	try
 	{
+#if IS_ENABLE_SHAPE_APP
+		ShapesApp theApp(hInstance);
+#else
 		BoxApp theApp(hInstance);
+#endif
 		if (!theApp.Initialize())
 		{
 			return 0;
