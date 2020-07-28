@@ -69,8 +69,8 @@ void ShapesApp::BuildShapesGeometry()
 {
     GeometryGenerator geoGen;
     GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
-    GeometryGenerator::MeshData pyramid = geoGen.CreateFixedBox();
-
+    GeometryGenerator::MeshData pyramid = geoGen.CreatePyramid(10, 10, 0.5f, 3.0f);
+    //GeometryGenerator::MeshData pyramid= geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
     // We are concatenating all the geometry into one big vertex/index buffer.
     // So define the regions in the buffer each submesh covers.
 

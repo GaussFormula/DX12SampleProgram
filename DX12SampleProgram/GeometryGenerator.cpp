@@ -466,7 +466,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius
     // Compute vertices for each stack ring starting at the bottom and moving up.
     for (uint32 i = 0; i < ringCount; ++i)
     {
-        float y = -0.5f * height + stackHeight;
+        float y = -0.5f * height + i * stackHeight;
         float r = bottomRadius + i * radiusStep;
 
         // Vertices of ring.
@@ -653,5 +653,5 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(
     uint32 bottomSliceCount, float bottomRadius, 
     float height)
 {
-    return CreateCylinder(bottomRadius, 0, height, bottomSliceCount, stackCount);
+    return CreateCylinder(bottomRadius, 0.0f, height, bottomSliceCount, stackCount);
 }
