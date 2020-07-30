@@ -23,3 +23,5 @@
 #include <algorithm>
 #include <array>
 #include <vector>
+
+const unsigned int gNumFrameResources = 3;

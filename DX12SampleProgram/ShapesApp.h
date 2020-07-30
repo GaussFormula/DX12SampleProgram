@@ -13,41 +13,7 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-const unsigned int gNumFrameResources = 3;
 
-// Light weight structure stores parameters to draw a shape.
-// This will vary from app-to-app.
-
-class RenderItem
-{
-public:
-    RenderItem() = default;
-
-    // World matrix of the shape that describes the object's local space
-    // relative to the world space, whick defines the position, orientation,
-    // and scale of the object in the world .
-    XMMATRIX World = DirectX::XMMatrixIdentity();
-
-    // Dirty flag indicating the object data has changed and we need to update
-    // the constant buffer. Because we have an object cbuffer for each FrameResource
-    // we have to apply the update for each FrameResource. Thus, when we modify object data
-    // object data we should set NumFrameDirty = gNumFrameResources so that each
-    // frame resource gets the updates.
-    int NumFrameDirty = gNumFrameResources;
-
-    // Index into GPU constant buffer corresponding to the ObjectCB for this render item.
-    UINT ObjectConstantBufferIndex = -1;
-
-    MeshGeometry* Geo = nullptr;
-
-    // Primitive topology.
-    D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
-    // DrawIndexedInstanced parameters.
-    UINT IndexCount = 0;
-    UINT StartIndexLocation = 0;
-    int BaseVertexLocation = 0;
-};
 
 #if IS_ENABLE_SHAPE_APP
 class ShapesApp :public D3DAppBase

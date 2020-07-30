@@ -55,8 +55,8 @@ void ShapesApp::BuildShadersAndInputLayout()
 #else
     UINT compileFlags = 0;
 #endif
-    ThrowIfFailed(D3DCompileFromFile(L"color.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &m_shaders["standardVS"], nullptr));
-    ThrowIfFailed(D3DCompileFromFile(L"color.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &m_shaders["opaquePS"], nullptr));
+    ThrowIfFailed(D3DCompileFromFile(L"Shapes.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &m_shaders["standardVS"], nullptr));
+    ThrowIfFailed(D3DCompileFromFile(L"Shapes.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &m_shaders["opaquePS"], nullptr));
 
     m_inputLayout =
     {

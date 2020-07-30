@@ -79,7 +79,7 @@
     <CustomBuild Include="shaders.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="color.hlsl">
+    <CustomBuild Include="Shapes.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
   </ItemGroup>
