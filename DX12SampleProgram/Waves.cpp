@@ -93,11 +93,11 @@ void Waves::Disturb(int i, int j, float magnitude)
     float halfMag = 0.5f * magnitude;
 
     // Disturb the ijth vertex height and its neighbors.
-    m_currentSolution[i * m_numCols + j].y += magnitude;
-    m_currentSolution[i * m_numCols + j + 1].y += halfMag;
-    m_currentSolution[i * m_numCols + j - 1].y += halfMag;
-    m_currentSolution[(i + 1) * m_numCols + j].y += halfMag;
-    m_currentSolution[(i - 1) * m_numCols + j].y += halfMag;
+    m_currentSolution[(INT64)i * m_numCols + j].y += magnitude;
+    m_currentSolution[(INT64)i * m_numCols + j + 1].y += halfMag;
+    m_currentSolution[(INT64)i * m_numCols + j - 1].y += halfMag;
+    m_currentSolution[((INT64)i + 1) * m_numCols + j].y += halfMag;
+    m_currentSolution[((INT64)i - 1) * m_numCols + j].y += halfMag;
 }
 
 void Waves::Update(float dt)
