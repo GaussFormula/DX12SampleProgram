@@ -1,6 +1,15 @@
 #pragma once
 #include "stdafx.h"
 #include <DirectXCollision.h>
+
+const unsigned int gNumFrameResources = 3;
+
+enum class RenderLayer :int
+{
+    Opaque=0,
+    Count
+};
+
 inline std::wstring AnsiToWString(const std::string& str)
 {
     WCHAR buffer[512];

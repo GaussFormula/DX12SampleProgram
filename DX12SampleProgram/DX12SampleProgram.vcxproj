@@ -158,6 +158,7 @@
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
+    <ClInclude Include="LandAndWavesApp.h" />
     <ClInclude Include="ShapesApp.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UploadBuffer.h" />
