@@ -83,6 +83,9 @@
     <ClCompile Include="Waves.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="LandAndWavesApp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders.hlsl">
