@@ -29,4 +29,60 @@ private:
     void OnKeyboardInput(const GameTimer& gt);
     void UpdateCamera(const GameTimer& gt);
     void UpdateObjectConstantBuffers(const GameTimer& gt);
+    void UpdateMainPassConstantBuffer(const GameTimer& gt);
+    void UpdateWaves(const GameTimer& gt);
+
+    void BuildRootSignature();
+    void BuildShadersAndInputLayout();
+    void BuildLandgeometry();
+    void BuildWaveGeometryBuffers();
+    void BuildPSOs();
+    void BuildFrameResources();
+    void BuildRenderItems();
+    void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& RenderItems);
+
+    float GetHillsHeight(float x, float z)const;
+    DirectX::XMFLOAT3 GetHillsNormal(float x, float z)const;
+
+private:
+    std::vector<std::unique_ptr<FrameResource>> m_frameResources;
+    FrameResource* m_currentFrameResource = nullptr;
+    UINT m_currentBackBufferIndex = 0;
+
+    UINT m_cbvSrvUavDescriptorSize = 0;
+
+    ComPtr<ID3D12RootSignature> m_rootSignature = nullptr;
+
+    std::unordered_map<std::string, std::unique_ptr<MeshGeometry>>  m_geometries;
+    std::unordered_map<std::string, ComPtr<ID3DBlob>>   m_shaders;
+    std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>    m_PSOs;
+
+    std::vector<D3D12_INPUT_ELEMENT_DESC>   m_inputLayout;
+
+    RenderItem* m_waveRenderItem = nullptr;
+
+    // List of all the render items.
+    std::vector<std::unique_ptr<RenderItem>>    m_allRenderItems;
+
+    // Render items divided by PSO.
+    std::vector<RenderItem*>    m_renderItemLayer[(int)RenderLayer::Count];
+
+    std::unique_ptr<Waves>  m_waves;
+
+    PassConstants m_mainPassConstantBuffer;
+
+    bool m_isWireFrame = false;
+
+    DirectX::XMFLOAT3 m_cameraPos = { 0.0f,0.0f,0.0f };
+    DirectX::XMMATRIX m_view = DirectX::XMMatrixIdentity();
+    DirectX::XMMATRIX m_proj = DirectX::XMMatrixIdentity();
+
+    float m_cameraTheta = 1.5f * DirectX::XM_PI;
+    float m_cameraPhi = DirectX::XM_PIDIV2 - 0.1f;
+    float m_cameraRadius = 50.f;
+
+    float m_sunTheta = 1.25f * DirectX::XM_PI;
+    float m_sunPhi = DirectX::XM_PIDIV4;
+
+    POINT m_lastMousePos = { 0.0f,0.0f };
 };
