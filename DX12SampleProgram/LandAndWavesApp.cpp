@@ -49,4 +49,25 @@ void LandAndWavesApp::BuildRootSignature()
         IID_PPV_ARGS(&m_rootSignature)
     ));
 }
+
+void LandAndWavesApp::BuildShadersAndInputLayout()
+{
+#if defined(_DEBUG)|(DEBUG)
+    // Enable better shader debugging with the graphics debugging tools.
+    UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+    UINT compileFlags = 0;
+#endif
+    ThrowIfFailed(D3DCompileFromFile(L"LandAndWaves.hlsl", nullptr, nullptr, 
+        "VSMain", "vs_5_0", compileFlags, 0, &m_shaders["standardVS"], nullptr));
+    ThrowIfFailed(D3DCompileFromFile(L"LandAndWaves.hlsl", nullptr, nullptr,
+        "PSMain", "ps_5_0", compileFlags, 0, &m_shaders["opaquePS"], nullptr
+    ));
+    m_inputLayout =
+    {
+        {"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+        {"COLOR",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,12,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0}
+    };
+}
+
 #endif
