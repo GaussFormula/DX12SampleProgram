@@ -34,7 +34,7 @@ private:
 
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
-    void BuildLandgeometry();
+    void BuildLandGeometry();
     void BuildWaveGeometryBuffers();
     void BuildPSOs();
     void BuildFrameResources();
