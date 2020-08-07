@@ -136,6 +136,13 @@ void LandAndWavesApp::BuildLandGeometry()
             vertices[i].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
+
+    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+
+    std::vector<std::uint16_t> indices = grid.GetIndices16();
+    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+    std::unique_ptr<MeshGeometry> geo = std::make_unique<MeshGeometry>();
 }
 
 #endif
