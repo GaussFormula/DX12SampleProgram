@@ -143,6 +143,20 @@ void LandAndWavesApp::BuildLandGeometry()
     const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
     std::unique_ptr<MeshGeometry> geo = std::make_unique<MeshGeometry>();
+    geo->Name = "landGeo";
+
+    ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
+    CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+    geo->VertexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(), 
+        vertices.data(), 
+        vbByteSize, geo->VertexBufferUploader);
+
+    geo->IndexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(),
+        indices.data(), ibByteSize, geo->IndexBufferUploader);
 }
 
 #endif
