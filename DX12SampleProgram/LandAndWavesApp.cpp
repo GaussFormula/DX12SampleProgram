@@ -157,6 +157,88 @@ void LandAndWavesApp::BuildLandGeometry()
 
     geo->IndexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(),
         indices.data(), ibByteSize, geo->IndexBufferUploader);
+
+    geo->VertexByteStride = sizeof(Vertex);
+    geo->VertexBufferByteSize = vbByteSize;
+    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    geo->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry subMesh;
+    subMesh.BaseVertexLocation = 0;
+    subMesh.StartIndexCount = 0;
+    subMesh.IndexCount = (UINT)indices.size();
+
+    geo->DrawArags["grid"] = subMesh;
+
+    m_geometries["landGeo"] = std::move(geo);
 }
 
+void LandAndWavesApp::BuildWaveGeometryBuffers()
+{
+    std::vector<std::uint16_t> indices(3 * m_waves->GetTriangleCount());
+    assert(m_waves->GetVertexCount() < 0x0000ffff);
+
+    // Iterate over each quad.
+    int m = m_waves->GetRowCount();
+    int n = m_waves->GetColumnCount();
+    UINT64 k = 0;
+    for (int i = 0; i < m - 1; ++i)
+    {
+        for (int j = 0; j < n - 1; ++j)
+        {
+            indices[k] = i * n + j;
+            indices[k + 1] = i * n + j + 1;
+            indices[k + 2] = (i + 1) * n + j;
+
+            indices[k + 3] = (i + 1) * n + j;
+            indices[k + 4] = i * n + j + 1;
+            indices[k + 5] = (i + 1) * n + j + 1;
+            k += 6;// Next quad.
+        }
+    }
+
+    UINT vbByteSize = m_waves->GetVertexCount() * sizeof(Vertex);
+    UINT ibByteSize = indices.size() * sizeof(std::uint16_t);
+
+    std::unique_ptr<MeshGeometry> geo = std::make_unique<MeshGeometry>();
+    geo->Name = "waterGeo";
+
+    // Set dynamically.
+    geo->VertexBufferCPU = nullptr;
+    geo->VertexBufferGPU = nullptr;
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+    geo->IndexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(), indices.data(),
+        ibByteSize, geo->IndexBufferUploader);
+
+    geo->VertexByteStride = sizeof(Vertex);
+    geo->VertexBufferByteSize = vbByteSize;
+    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    geo->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry submesh;
+    submesh.IndexCount = (UINT)indices.size();
+    submesh.StartIndexCount = 0;
+    submesh.BaseVertexLocation = 0;
+
+    geo->DrawArags["grid"] = submesh;
+
+    m_geometries["waterGeo"] = std::move(geo);
+}
+
+void LandAndWavesApp::BuildPSOs()
+{
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
+
+    // PSO for opaque objects.
+
+    ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+    opaquePsoDesc.InputLayout = { m_inputLayout.data(),(UINT)m_inputLayout.size() };
+    opaquePsoDesc.pRootSignature = m_rootSignature.Get();
+    opaquePsoDesc.VS = CD3DX12_SHADER_BYTECODE(m_shaders["standardVS"].Get());
+    opaquePsoDesc.PS = CD3DX12_SHADER_BYTECODE(m_shaders["opaquePS"].Get());
+    opaquePsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+}
 #endif
