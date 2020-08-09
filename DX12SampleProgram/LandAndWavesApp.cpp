@@ -255,4 +255,24 @@ void LandAndWavesApp::BuildPSOs()
     opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
     ThrowIfFailed(m_device->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&m_PSOs["opaque_wireframe"])));
 }
+
+void LandAndWavesApp::BuildRenderItems()
+{
+    std::unique_ptr<RenderItem> wavesRenderItem = std::make_unique<RenderItem>();
+    wavesRenderItem->World = DirectX::XMMatrixIdentity();
+    wavesRenderItem->ObjectConstantBufferIndex = 0;
+    wavesRenderItem->Geo = m_geometries["waterGeo"].get();
+    wavesRenderItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    wavesRenderItem->IndexCount = wavesRenderItem->Geo->DrawArags["grid"].IndexCount;
+    wavesRenderItem->StartIndexLocation = wavesRenderItem->Geo->DrawArags["grid"].StartIndexCount;
+    wavesRenderItem->BaseVertexLocation = wavesRenderItem->Geo->DrawArags["grid"].BaseVertexLocation;
+
+    m_waveRenderItem = wavesRenderItem.get();
+    m_renderItemLayer[(int)RenderLayer::Opaque].push_back(wavesRenderItem.get());
+
+    std::unique_ptr<RenderItem> gridRenderItem = std::make_unique<RenderItem>();
+    gridRenderItem->World = DirectX::XMMatrixIdentity();
+    gridRenderItem->ObjectConstantBufferIndex = 1;
+    gridRenderItem->Geo = m_geometries["landGeo"].get();
+}
 #endif
