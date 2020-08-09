@@ -283,4 +283,44 @@ void LandAndWavesApp::BuildRenderItems()
     m_allRenderItems.push_back(std::move(wavesRenderItem));
     m_allRenderItems.push_back(std::move(gridRenderItem));
 }
+
+void LandAndWavesApp::BuildFrameResources()
+{
+    for (int i = 0; i < gNumFrameResources; ++i)
+    {
+        m_frameResources.push_back(std::make_unique<FrameResource>(m_device.Get(), 1,
+            (UINT)m_allRenderItems.size(), m_waves->GetVertexCount()));
+    }
+}
+
+bool LandAndWavesApp::Initialize()
+{
+    if (!D3DAppBase::Initialize())
+    {
+        return false;
+    }
+
+    // Reset the command list to prep for initialization commands.
+    ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+
+    m_waves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
+
+    BuildRootSignature();
+    BuildShadersAndInputLayout();
+    BuildLandGeometry();
+    BuildWaveGeometryBuffers();
+    BuildRenderItems();
+    BuildFrameResources();
+    BuildPSOs();
+
+    // Execute the initialize commands.
+    ThrowIfFailed(m_commandList->Close());
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // Wait until initialization is completed.
+    FlushCommandQueue();
+
+    return true;
+}
 #endif
