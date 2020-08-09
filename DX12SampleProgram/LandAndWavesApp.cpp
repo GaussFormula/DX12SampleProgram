@@ -274,5 +274,13 @@ void LandAndWavesApp::BuildRenderItems()
     gridRenderItem->World = DirectX::XMMatrixIdentity();
     gridRenderItem->ObjectConstantBufferIndex = 1;
     gridRenderItem->Geo = m_geometries["landGeo"].get();
+    gridRenderItem->IndexCount = gridRenderItem->Geo->DrawArags["grid"].IndexCount;
+    gridRenderItem->StartIndexLocation = gridRenderItem->Geo->DrawArags["grid"].StartIndexCount;
+    gridRenderItem->BaseVertexLocation = gridRenderItem->Geo->DrawArags["grid"].BaseVertexLocation;
+
+    m_renderItemLayer[(int)RenderLayer::Opaque].push_back(gridRenderItem.get());
+
+    m_allRenderItems.push_back(std::move(wavesRenderItem));
+    m_allRenderItems.push_back(std::move(gridRenderItem));
 }
 #endif
