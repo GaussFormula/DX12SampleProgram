@@ -339,4 +339,18 @@ void LandAndWavesApp::OnMouseDown(WPARAM btnState, int x, int y)
 
     SetCapture(m_hMainWnd);
 }
+
+void LandAndWavesApp::UpdateCamera(const GameTimer& gt)
+{
+    // Convert Spherical to Cartesian coordinates.
+    m_cameraPos.x = m_cameraRadius * sinf(m_cameraPhi) * cosf(m_cameraTheta);
+    m_cameraPos.z = m_cameraRadius * sinf(m_cameraPhi) * sinf(m_cameraTheta);
+    m_cameraPos.y = m_cameraRadius * cosf(m_cameraPhi);
+
+    // Build view matrix.
+    XMVECTOR pos = XMVectorSet(m_cameraPos.x, m_cameraPos.y, m_cameraPos.z, 1.0f);
+    XMVECTOR target = XMVectorZero();
+    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    m_view = XMMatrixLookAtLH(pos, target, up);
+}
 #endif
