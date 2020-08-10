@@ -323,4 +323,12 @@ bool LandAndWavesApp::Initialize()
 
     return true;
 }
+
+void LandAndWavesApp::OnResize()
+{
+    D3DAppBase::OnResize();
+
+    // The window resized, so update the aspect ratio and recompute the projection matrix.
+    m_proj = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
+}
 #endif
