@@ -331,4 +331,12 @@ void LandAndWavesApp::OnResize()
     // The window resized, so update the aspect ratio and recompute the projection matrix.
     m_proj = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
 }
+
+void LandAndWavesApp::OnMouseDown(WPARAM btnState, int x, int y)
+{
+    m_lastMousePos.x = x;
+    m_lastMousePos.y = y;
+
+    SetCapture(m_hMainWnd);
+}
 #endif
