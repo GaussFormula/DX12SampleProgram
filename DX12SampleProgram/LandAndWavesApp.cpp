@@ -340,6 +340,37 @@ void LandAndWavesApp::OnMouseDown(WPARAM btnState, int x, int y)
     SetCapture(m_hMainWnd);
 }
 
+void LandAndWavesApp::OnMouseUp(WPARAM btnState, int x, int y)
+{
+    ReleaseCapture();
+}
+
+void LandAndWavesApp::OnMouseMove(WPARAM btnState, int x, int y)
+{
+    if ((btnState & MK_LBUTTON) != 0)
+    {
+        // Make each pixel correspond to a quarter of a degree.
+        float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_lastMousePos.x));
+        float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_lastMousePos.y));
+
+        // Update angles based on input to orbit camera around the items.
+        m_cameraTheta += dx;
+        m_cameraPhi += dy;
+    }
+    else if ((btnState & MK_RBUTTON) != 0)
+    {
+        // Make each pixel correspond to 0.2 unit in the scene.
+        float dx = 0.2f * static_cast<float>(x - m_lastMousePos.x);
+        float dy = 0.2f * static_cast<float>(y - m_lastMousePos.y);
+
+        // Update the camera radius based on input.
+        m_cameraRadius += dx - dy;
+
+    }
+
+    m_lastMousePos = { x,y };
+}
+
 void LandAndWavesApp::UpdateCamera(const GameTimer& gt)
 {
     // Convert Spherical to Cartesian coordinates.
