@@ -384,4 +384,42 @@ void LandAndWavesApp::UpdateCamera(const GameTimer& gt)
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     m_view = XMMatrixLookAtLH(pos, target, up);
 }
+
+void LandAndWavesApp::OnKeyboardInput(const GameTimer& gt)
+{
+    if (GetAsyncKeyState('1') & 0x8000)
+    {
+        m_isWireFrame = true;
+    }
+    else
+    {
+        m_isWireFrame = false;
+    }
+}
+
+void LandAndWavesApp::UpdateObjectConstantBuffers(const GameTimer& gt)
+{
+    auto currentObjectCB = m_currentFrameResource->m_objCB.get();
+    for (auto& e : m_allRenderItems)
+    {
+        // Only update the cbuffer data if the constants have changed.
+        // This needs to be tracked per frame resource.
+        if (e->NumFrameDirty > 0)
+        {
+            ObjectConstants obj;
+            obj.World = XMMatrixTranspose(e->World);
+
+            currentObjectCB->CopyData(e->ObjectConstantBufferIndex, obj);
+
+            // Next frame resource need to be updated too.
+            e->NumFrameDirty--;
+        }
+    }
+}
+
+void LandAndWavesApp::UpdateMainPassConstantBuffer(const GameTimer& gt)
+{
+    XMMATRIX view = m_view;
+    XMMATRIX proj = m_proj;
+}
 #endif
