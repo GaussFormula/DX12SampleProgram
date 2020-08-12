@@ -175,7 +175,7 @@ void LandAndWavesApp::BuildLandGeometry()
 
 void LandAndWavesApp::BuildWaveGeometryBuffers()
 {
-    std::vector<std::uint16_t> indices(3 * m_waves->GetTriangleCount());
+    std::vector<std::uint16_t> indices((UINT64)3 * m_waves->GetTriangleCount());
     assert(m_waves->GetVertexCount() < 0x0000ffff);
 
     // Iterate over each quad.
@@ -500,5 +500,29 @@ void LandAndWavesApp::Update(const GameTimer& gt)
     UpdateObjectConstantBuffers(gt);
     UpdateMainPassConstantBuffer(gt);
     UpdateWaves(gt);
+}
+
+void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& RenderItems)
+{
+    UINT objCBByteSize = CalculateConstantBufferByteSize(sizeof(ObjectConstants));
+
+    ID3D12Resource* objectCB = m_currentFrameResource->m_objCB->Resource();
+
+    // For each render item.
+    for (size_t i = 0; i < RenderItems.size(); ++i)
+    {
+        RenderItem* ri = RenderItems[i];
+
+        cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView());
+        cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
+        cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
+
+        D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
+        objCBAddress += (UINT64)ri->ObjectConstantBufferIndex * objCBByteSize;
+
+        cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+
+        cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+    }
 }
 #endif
