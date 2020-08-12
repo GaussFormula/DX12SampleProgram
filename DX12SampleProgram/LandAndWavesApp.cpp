@@ -426,5 +426,20 @@ void LandAndWavesApp::UpdateMainPassConstantBuffer(const GameTimer& gt)
 
     m_mainPassConstantBuffer.View = XMMatrixTranspose(m_view);
     m_mainPassConstantBuffer.InvView = XMMatrixTranspose(invView);
+    m_mainPassConstantBuffer.Proj = XMMatrixTranspose(m_proj);
+    m_mainPassConstantBuffer.InvProj = XMMatrixTranspose(invProj);
+    m_mainPassConstantBuffer.ViewProj = XMMatrixTranspose(viewProj);
+    m_mainPassConstantBuffer.InvViewProj = XMMatrixTranspose(invViewProj);
+    
+    m_mainPassConstantBuffer.EyePosW = m_cameraPos;
+    m_mainPassConstantBuffer.RenderTargetSize = XMFLOAT2((float)m_width, (float)m_height);
+    m_mainPassConstantBuffer.InvRenderTargetSize = XMFLOAT2(1.0f / m_width, 1.0f / m_height);
+    m_mainPassConstantBuffer.NearZ = 1.0f;
+    m_mainPassConstantBuffer.FarZ = 1000.0f;
+    m_mainPassConstantBuffer.DeltaTime = gt.DeltaTime();
+    m_mainPassConstantBuffer.TotalTime = gt.TotalTime();
+
+    UploadBuffer<PassConstants>* currentPassConstantBuffer = m_currentFrameResource->m_passCB.get();
+    currentPassConstantBuffer->CopyData(0, m_mainPassConstantBuffer);
 }
 #endif
