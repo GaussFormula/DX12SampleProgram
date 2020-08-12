@@ -419,7 +419,12 @@ void LandAndWavesApp::UpdateObjectConstantBuffers(const GameTimer& gt)
 
 void LandAndWavesApp::UpdateMainPassConstantBuffer(const GameTimer& gt)
 {
-    XMMATRIX view = m_view;
-    XMMATRIX proj = m_proj;
+    XMMATRIX viewProj = XMMatrixMultiply(m_view, m_proj);
+    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(m_view), m_view);
+    XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(m_proj), m_proj);
+    XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
+
+    m_mainPassConstantBuffer.View = XMMatrixTranspose(m_view);
+    m_mainPassConstantBuffer.InvView = XMMatrixTranspose(invView);
 }
 #endif
