@@ -442,4 +442,26 @@ void LandAndWavesApp::UpdateMainPassConstantBuffer(const GameTimer& gt)
     UploadBuffer<PassConstants>* currentPassConstantBuffer = m_currentFrameResource->m_passCB.get();
     currentPassConstantBuffer->CopyData(0, m_mainPassConstantBuffer);
 }
+
+void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
+{
+    // Every quarter second, generate a random wave.
+    static float t_base = 0.0f;
+    if ((m_gameTimer.TotalTime() - t_base >= 0.25f))
+    {
+        t_base += 0.25f;
+
+        int i = rand() % (m_waves->GetRowCount() - 5 - 4) + 4;
+        int j = rand() % (m_waves->GetColumnCount() - 5 - 4) + 4;
+
+        float r = (rand() / (float)RAND_MAX) * (0.5f - 0.2f) + 0.2f;
+
+        m_waves->Disturb(i, j, r);
+    }
+
+    // Update the wave simulation.
+    m_waves->Update(gt.DeltaTime());
+
+
+}
 #endif
