@@ -451,17 +451,54 @@ void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
     {
         t_base += 0.25f;
 
-        int i = rand() % (m_waves->GetRowCount() - 5 - 4) + 4;
-        int j = rand() % (m_waves->GetColumnCount() - 5 - 4) + 4;
+        int i = myMathLibrary::Rand(4, m_waves->GetRowCount() - 5);
+        int j = myMathLibrary::Rand(4, m_waves->GetColumnCount() - 5);
 
-        float r = (rand() / (float)RAND_MAX) * (0.5f - 0.2f) + 0.2f;
-
+        float r = myMathLibrary::RandF(0.2f, 0.5f);
         m_waves->Disturb(i, j, r);
     }
 
     // Update the wave simulation.
     m_waves->Update(gt.DeltaTime());
 
+    // Update the wave vertex buffer with the new solution.
+    UploadBuffer<Vertex>* currentWavesVB = m_currentFrameResource->m_wavesVB.get();
 
+    for (int i = 0; i < m_waves->GetVertexCount(); ++i)
+    {
+        Vertex v;
+
+        v.Pos = m_waves->Position(i);
+        v.Color = XMFLOAT4(DirectX::Colors::Blue);
+
+        currentWavesVB->CopyData(i, v);
+    }
+
+    // Set the dynamic VB of the wave render item to the current frame VB.
+    m_waveRenderItem->Geo->VertexBufferGPU = currentWavesVB->Resource();
+}
+
+void LandAndWavesApp::Update(const GameTimer& gt)
+{
+    OnKeyboardInput(gt);
+    UpdateCamera(gt);
+
+    // Cycle through the circular frame resource array.
+    m_currentFrameResourceIndex = (m_currentFrameResourceIndex + 1) % gNumFrameResources;
+    m_currentFrameResource = m_frameResources[m_currentFrameResourceIndex].get();
+
+    // Has the GPU finished processing the commands of the current frame resource?
+    // If not, wait until the GPU has completed commands up to this fence point.
+    if (m_currentFrameResource->m_fence != 0 && m_fence->GetCompletedValue() < m_currentFrameResource->m_fence)
+    {
+        HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+        ThrowIfFailed(m_fence->SetEventOnCompletion(m_currentFrameResource->m_fence, eventHandle));
+        WaitForSingleObject(eventHandle, INFINITE);
+        CloseHandle(eventHandle);
+    }
+
+    UpdateObjectConstantBuffers(gt);
+    UpdateMainPassConstantBuffer(gt);
+    UpdateWaves(gt);
 }
 #endif

@@ -47,7 +47,7 @@ private:
 private:
     std::vector<std::unique_ptr<FrameResource>> m_frameResources;
     FrameResource* m_currentFrameResource = nullptr;
-    UINT m_currentBackBufferIndex = 0;
+    UINT m_currentFrameResourceIndex = 0;
 
     UINT m_cbvSrvUavDescriptorSize = 0;
 
@@ -84,5 +84,5 @@ private:
     float m_sunTheta = 1.25f * DirectX::XM_PI;
     float m_sunPhi = DirectX::XM_PIDIV4;
 
-    POINT m_lastMousePos = { 0.0f,0.0f };
+    POINT m_lastMousePos = { (LONG)(0),(LONG)0 };
 };

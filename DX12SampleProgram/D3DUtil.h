@@ -192,3 +192,21 @@ static Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
     // copy. The caller can Release the uploadBuffer after it knows the copy has been done.
     return defaultBuffer;
 }
+
+namespace myMathLibrary
+{
+    static int Rand(const int a, const int b)
+    {
+        return a + std::rand() % (std::abs(b - a) + 1);
+    }
+
+    static float RandF()
+    {
+        return (float)rand() / (float)RAND_MAX;
+    }
+
+    static float RandF(const float a,const float b)
+    {
+        return a + RandF() * std::abs(b - a);
+    }
+}
