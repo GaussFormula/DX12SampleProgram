@@ -3,13 +3,8 @@
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-#ifndef IS_ENABLE_LAND_APP
-#define IS_ENABLE_LAND_APP 0
-#endif // !IS_ENABLE_LAND_APP
-
-#if IS_ENABLE_LAND_APP
 #include "LandAndWavesApp.h"
-
+#if IS_ENABLE_LAND_APP
 LandAndWavesApp::LandAndWavesApp(HINSTANCE hInstance)
     :D3DAppBase(hInstance)
 {}
@@ -26,7 +21,6 @@ void LandAndWavesApp::BuildRootSignature()
 {
     // Root parameter can be a table, root descriptor or root constants.
     CD3DX12_ROOT_PARAMETER slotRootParameter[2];
-    ZeroMemory(slotRootParameter, sizeof(CD3DX12_ROOT_PARAMETER) * 2);
 
     // Create root CBV.
     slotRootParameter[0].InitAsConstantBufferView(0);
@@ -62,9 +56,9 @@ void LandAndWavesApp::BuildShadersAndInputLayout()
 #else
     UINT compileFlags = 0;
 #endif
-    ThrowIfFailed(D3DCompileFromFile(L"LandAndWaves.hlsl", nullptr, nullptr, 
+    ThrowIfFailed(D3DCompileFromFile(L"Shapes.hlsl", nullptr, nullptr, 
         "VSMain", "vs_5_0", compileFlags, 0, &m_shaders["standardVS"], nullptr));
-    ThrowIfFailed(D3DCompileFromFile(L"LandAndWaves.hlsl", nullptr, nullptr,
+    ThrowIfFailed(D3DCompileFromFile(L"Shapes.hlsl", nullptr, nullptr,
         "PSMain", "ps_5_0", compileFlags, 0, &m_shaders["opaquePS"], nullptr
     ));
     m_inputLayout =
@@ -532,5 +526,64 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
     // We can only reset when the associated command lists have finished execution on the GPU.
     ThrowIfFailed(m_currentFrameResource->m_commandAllocator->Reset());
 
+    // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+    // Reusing the command list reuses memory.
+    if (m_isWireFrame)
+    {
+        ThrowIfFailed(m_commandList->Reset(m_currentFrameResource->m_commandAllocator.Get(),
+            m_PSOs["opaque_wireframe"].Get()));
+    }
+    else
+    {
+        ThrowIfFailed(m_commandList->Reset(m_currentFrameResource->m_commandAllocator.Get(),
+            m_PSOs["opaque"].Get()));
+    }
+
+    m_commandList->RSSetViewports(1, &m_screenViewport);
+    m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
+    // Indicate a state transition on the resource usage.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
+    ));
+
+    // Clear the back buffer and depth buffer.
+    m_commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::GhostWhite, 0, nullptr);
+    m_commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    // Specify the buffers we are going to render to.
+    m_commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+
+    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+    // Bind per-pass constant buffer. We only need to do this once per-pass.
+    auto passCB = m_currentFrameResource->m_passCB->Resource();
+    m_commandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
+
+    DrawRenderItems(m_commandList.Get(), m_renderItemLayer[(int)RenderLayer::Opaque]);
+
+    // Indicate a state transition on the resource usage.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
+    ));
+
+    // Done recording commands.
+    ThrowIfFailed(m_commandList->Close());
+
+    // Add the command list to the queue for execution.
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // Swap the back and front buffers.
+    ThrowIfFailed(m_swapchain->Present(0, 0));
+    m_currentBackBufferIndex = (m_currentBackBufferIndex + 1) % m_swapChainBufferCount;
+
+    // Advance the fence value to mark commands up to this fence point.
+    m_currentFrameResource->m_fence = ++m_currentFence;
+
+    // Add an instruction to the command queue to set a new fence point.
+    // Because we are on the GPU timeline, the new fence point won't be set
+    // the GPU finishes processing all the commands prior to this signal().
+    m_commandQueue->Signal(m_fence.Get(), m_currentFence);
 }
 #endif

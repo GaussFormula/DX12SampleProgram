@@ -6,6 +6,10 @@
 #include "FrameResource.h"
 #include "Waves.h"
 
+#ifndef IS_ENABLE_LAND_APP
+#define IS_ENABLE_LAND_APP 0
+#endif // !IS_ENABLE_LAND_APP
+
 
 class LandAndWavesApp :public D3DAppBase
 {
@@ -48,8 +52,6 @@ private:
     std::vector<std::unique_ptr<FrameResource>> m_frameResources;
     FrameResource* m_currentFrameResource = nullptr;
     UINT m_currentFrameResourceIndex = 0;
-
-    UINT m_cbvSrvUavDescriptorSize = 0;
 
     ComPtr<ID3D12RootSignature> m_rootSignature = nullptr;
 
