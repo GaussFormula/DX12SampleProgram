@@ -525,4 +525,12 @@ void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const 
         cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
     }
 }
+
+void LandAndWavesApp::Draw(const GameTimer& gt)
+{
+    // Reuse the memory associated with command recording.
+    // We can only reset when the associated command lists have finished execution on the GPU.
+    ThrowIfFailed(m_currentFrameResource->m_commandAllocator->Reset());
+
+}
 #endif
