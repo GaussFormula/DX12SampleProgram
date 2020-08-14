@@ -7,7 +7,7 @@
 #include "Waves.h"
 
 #ifndef IS_ENABLE_LAND_APP
-#define IS_ENABLE_LAND_APP 0
+#define IS_ENABLE_LAND_APP 1
 #endif // !IS_ENABLE_LAND_APP
 
 
