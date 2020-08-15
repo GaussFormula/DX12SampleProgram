@@ -21,6 +21,7 @@ void LandAndWavesApp::BuildRootSignature()
 {
     // Root parameter can be a table, root descriptor or root constants.
     CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+    ZeroMemory(slotRootParameter, sizeof(CD3DX12_ROOT_PARAMETER) * _countof(slotRootParameter));
 
     // Create root CBV.
     slotRootParameter[0].InitAsConstantBufferView(0);
