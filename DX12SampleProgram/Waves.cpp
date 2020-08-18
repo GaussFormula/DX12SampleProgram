@@ -21,7 +21,7 @@ Waves::Waves(int m, int n, float dx, float dt, float speed, float damping)
 
     float d = damping * dt + 2.0f;
     float e = (speed * speed) * (dt * dt) / (dx * dx);
-    m_k1 = (damping * dt - 2.0) / d;
+    m_k1 = ((double)damping * dt - 2.0) / d;
     m_k2 = (4.0f - 8.0f * e) / d;
     m_k3 = (2.0f * e) / d;
 

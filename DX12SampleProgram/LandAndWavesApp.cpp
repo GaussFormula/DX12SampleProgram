@@ -91,7 +91,7 @@ XMFLOAT3 LandAndWavesApp::GetHillsNormal(float x, float z)const
 void LandAndWavesApp::BuildLandGeometry()
 {
     GeometryGenerator geoGen;
-    GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
+    GeometryGenerator::MeshData grid = geoGen.CreateGrid(200.0f, 200.0f, 100, 100);
 
     // Extract the vertex elements we are interested and apply the height function to 
     // each vertex. In addition, color the vertices based on their height so we have sandy looking 
@@ -346,8 +346,8 @@ void LandAndWavesApp::OnMouseMove(WPARAM btnState, int x, int y)
     if ((btnState & MK_LBUTTON) != 0)
     {
         // Make each pixel correspond to a quarter of a degree.
-        float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_lastMousePos.x));
-        float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_lastMousePos.y));
+        float dx = XMConvertToRadians(0.03f * static_cast<float>(x - m_lastMousePos.x));
+        float dy = XMConvertToRadians(0.03f * static_cast<float>(y - m_lastMousePos.y));
 
         // Update angles based on input to orbit camera around the items.
         m_cameraTheta += dx;
