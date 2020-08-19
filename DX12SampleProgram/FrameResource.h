@@ -76,7 +76,7 @@ public:
     // we have to apply the update for each FrameResource. Thus, when we modify object data
     // object data we should set NumFrameDirty = gNumFrameResources so that each
     // frame resource gets the updates.
-    int NumFrameDirty = gNumFrameResources;
+    UINT NumFrameDirty = gNumFrameResources;
 
     // Index into GPU constant buffer corresponding to the ObjectCB for this render item.
     UINT ObjectConstantBufferIndex = -1;

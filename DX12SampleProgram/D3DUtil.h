@@ -193,6 +193,32 @@ static Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
     return defaultBuffer;
 }
 
+// Simple struct to represent a material for demos.
+struct Material
+{
+    // Unique material name for lookup.
+    std::string Name;
+
+    // Index into constant buffer corresponding to this material.
+    int MaterialConstantBufferIndex = -1;
+
+    // Index into SRV heap for diffuse texture. Used in the texturing chapter.
+    int DiffuseSrvHeapIndex = -1;
+
+    // Dirty flag indicating the material has changed and we need to 
+    // update the constant buffer. Because we have a material constant buffer
+    // for each FrameResource, we have to apply the update to each FrameResource.
+    // Thus, when we modify a material we should set NumFramesDirty=gNumFrameResources so that
+    // each frame resource gets the update.
+    UINT NumFramesDirty = gNumFrameResources;
+
+    // Material constant buffer data used for shading.
+    DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
+    DirectX::XMFLOAT3 FresnelR0 = { 0.02f,0.02f,0.02f };
+    float Roughness = 0.25f;
+    DirectX::XMMATRIX MaterialTransform = DirectX::XMMatrixIdentity();
+};
+
 namespace myMathLibrary
 {
     static int Rand(const int a, const int b)
