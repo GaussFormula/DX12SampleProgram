@@ -25,7 +25,7 @@ struct PassConstants
     float DeltaTime = 0.0f;
 };
 
-struct MateiralConstants
+struct MaterialConstants
 {
     DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
     DirectX::XMFLOAT3 FresnelR0 = { 0.02f,0.02f,0.02f };
@@ -45,7 +45,7 @@ struct Vertex
 struct FrameResource
 {
 public:
-    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount, UINT waveVertexCount=256);
+    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount, UINT waveVertexCount=256, UINT materialCount=1);
     FrameResource(const FrameResource& rhs) = delete;
     FrameResource& operator=(const FrameResource& rhs) = delete;
     ~FrameResource();
@@ -63,7 +63,7 @@ public:
     // that reference it. So each frame needs their own cbuffers.
     std::unique_ptr<UploadBuffer<Vertex>> m_wavesVB = nullptr;
 
-    std::unique_ptr<UploadBuffer<MateiralConstants>>    m_materialCB = nullptr;
+    std::unique_ptr<UploadBuffer<MaterialConstants>>    m_materialCB = nullptr;
 
     // Fence value to mark commands up to this fence point.
     // This lets us check if these frame resources are still in use by the GPU.

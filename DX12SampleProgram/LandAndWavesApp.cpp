@@ -306,6 +306,7 @@ bool LandAndWavesApp::Initialize()
     BuildLandGeometry();
     BuildWaveGeometryBuffers();
     BuildRenderItems();
+    BuildRenderItems();
     BuildFrameResources();
     BuildPSOs();
 
