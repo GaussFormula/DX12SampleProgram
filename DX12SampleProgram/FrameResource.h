@@ -25,6 +25,16 @@ struct PassConstants
     float DeltaTime = 0.0f;
 };
 
+struct MateiralConstants
+{
+    DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
+    DirectX::XMFLOAT3 FresnelR0 = { 0.02f,0.02f,0.02f };
+    float Roughness = 0.25f;
+
+    // Used in the chapter on texture mapping.
+    DirectX::XMMATRIX MatrixTransform = DirectX::XMMatrixIdentity();
+};
+
 struct Vertex
 {
     DirectX::XMFLOAT3 Pos;
@@ -52,6 +62,8 @@ public:
     // We cannot update a cbuffer until the GPU is done processing the commands
     // that reference it. So each frame needs their own cbuffers.
     std::unique_ptr<UploadBuffer<Vertex>> m_wavesVB = nullptr;
+
+    std::unique_ptr<UploadBuffer<MateiralConstants>>    m_materialCB = nullptr;
 
     // Fence value to mark commands up to this fence point.
     // This lets us check if these frame resources are still in use by the GPU.
