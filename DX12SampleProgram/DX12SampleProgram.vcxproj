@@ -159,6 +159,7 @@
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="LandAndWavesApp.h" />
+    <ClInclude Include="LitWavesApp.h" />
     <ClInclude Include="ShapesApp.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UploadBuffer.h" />
@@ -172,6 +173,7 @@
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="LandAndWavesApp.cpp" />
+    <ClCompile Include="LitWavesApp.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ShapesApp.cpp" />
     <ClCompile Include="Waves.cpp" />

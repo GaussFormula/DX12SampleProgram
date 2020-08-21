@@ -83,6 +83,8 @@ public:
     // and scale of the object in the world .
     DirectX::XMMATRIX World = DirectX::XMMatrixIdentity();
 
+    DirectX::XMMATRIX TexTransform = DirectX::XMMatrixIdentity();
+
     // Dirty flag indicating the object data has changed and we need to update
     // the constant buffer. Because we have an object cbuffer for each FrameResource
     // we have to apply the update for each FrameResource. Thus, when we modify object data
@@ -93,6 +95,7 @@ public:
     // Index into GPU constant buffer corresponding to the ObjectCB for this render item.
     UINT ObjectConstantBufferIndex = -1;
 
+    Material* Mat = nullptr;
     MeshGeometry* Geo = nullptr;
 
     // Primitive topology.

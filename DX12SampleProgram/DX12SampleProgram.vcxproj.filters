@@ -54,6 +54,9 @@
     <ClInclude Include="LandAndWavesApp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="LitWavesApp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DAppBase.cpp">
@@ -84,6 +87,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="LandAndWavesApp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LitWavesApp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

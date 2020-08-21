@@ -219,6 +219,17 @@ struct Material
     DirectX::XMMATRIX MaterialTransform = DirectX::XMMatrixIdentity();
 };
 
+struct Texture
+{
+    // Unique material name for looking up;
+    std::string materialName;
+
+    std::wstring FileName;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> Resource = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> UploadHeap = nullptr;
+};
+
 namespace myMathLibrary
 {
     static int Rand(const int a, const int b)
