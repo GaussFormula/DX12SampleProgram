@@ -235,4 +235,14 @@ namespace myMathLibrary
     {
         return a + RandF() * std::abs(b - a);
     }
+
+    static DirectX::XMVECTOR SphericalToCartesian(float radius, float theta, float phi)
+    {
+        return DirectX::XMVectorSet(
+            radius * sinf(phi) * cosf(theta),
+            radius * cosf(phi),
+            radius * sinf(phi) * sinf(theta),
+            1.0f
+        );
+    }
 }
