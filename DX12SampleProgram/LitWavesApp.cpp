@@ -52,3 +52,22 @@ void LitWavesApp::BuildRootSignature()
         IID_PPV_ARGS(&m_rootSignature)
     ));
 }
+
+void LitWavesApp::BuildShadersAndInputLayout()
+{
+#if defined(DEBUG)|(_DEBUG)
+    UINT compileFlag = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+    UINT compileFlag = 0;
+#endif
+    ThrowIfFailed(D3DCompileFromFile(L"Default.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "VSMain", "vs_5_0", compileFlag, 0, &m_shaders["standardVS"], nullptr));
+    ThrowIfFailed(D3DCompileFromFile(L"Default.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "PSMain", "ps_5_0", compileFlag, 0, &m_shaders["opaquePS"], nullptr));
+
+    m_inputLayout =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+}
