@@ -71,3 +71,14 @@ void LitWavesApp::BuildShadersAndInputLayout()
         { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 }
+
+void LitWavesApp::BuildLandGeometry()
+{
+    GeometryGenerator geoGen;
+    GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
+
+    // Extract the vertex elements we are interested and apply the height function to 
+    // each vertex. In addition, color the vertices based on their height so we have 
+    // sandy looking beaches, grassy low hills, and snow mountain peaks.
+
+}
