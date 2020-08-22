@@ -5,6 +5,8 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+#if IS_ENABLE_LITLAND_APP
+
 LitWavesApp::LitWavesApp(HINSTANCE hInstance)
     :D3DAppBase(hInstance)
 {
@@ -81,4 +83,14 @@ void LitWavesApp::BuildLandGeometry()
     // each vertex. In addition, color the vertices based on their height so we have 
     // sandy looking beaches, grassy low hills, and snow mountain peaks.
 
+    std::vector<Vertex> vertices;
+    const size_t verticesSize = (size_t)grid.Vertices.size();
+    for (size_t i = 0; i < verticesSize; ++i)
+    {
+        XMFLOAT3& p = grid.Vertices[i].Position;
+        vertices[i].Pos = p;
+        vertices[i].Pos.y = GetHillsHeight(p.x, p.z);
+    }
 }
+
+#endif // IS_ENABLE_LITLAND_APP

@@ -39,6 +39,7 @@ struct Vertex
 {
     DirectX::XMFLOAT3 Pos;
     DirectX::XMFLOAT4 Color;
+    DirectX::XMFLOAT3 Normal = { 0.0f,1.0f,0.0f };
 };
 
 // Store the resources needed for the CPU to build the command lists for a frame.
