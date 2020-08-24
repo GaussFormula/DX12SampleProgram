@@ -90,6 +90,7 @@ void LitWavesApp::BuildLandGeometry()
         XMFLOAT3& p = grid.Vertices[i].Position;
         vertices[i].Pos = p;
         vertices[i].Pos.y = GetHillsHeight(p.x, p.z);
+        vertices[i].Normal = GetHillsNormal(p.x, p.z);
     }
 }
 
