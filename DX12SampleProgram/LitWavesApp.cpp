@@ -92,6 +92,11 @@ void LitWavesApp::BuildLandGeometry()
         vertices[i].Pos.y = GetHillsHeight(p.x, p.z);
         vertices[i].Normal = GetHillsNormal(p.x, p.z);
     }
+
+    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+
+    std::vector<std::uint16_t> indices = grid.GetIndices16();
+    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 }
 
 #endif // IS_ENABLE_LITLAND_APP
