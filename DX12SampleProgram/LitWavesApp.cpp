@@ -103,6 +103,29 @@ void LitWavesApp::BuildLandGeometry()
 
     ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
     CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+    geo->VertexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(),
+        vertices.data(), vbByteSize, geo->VertexBufferUploader);
+
+    geo->IndexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(), indices.data(),
+        ibByteSize, geo->IndexBufferUploader);
+
+    geo->VertexByteStride = sizeof(Vertex);
+    geo->VertexBufferByteSize = vbByteSize;
+    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    geo->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry submesh;
+    submesh.BaseVertexLocation = 0;
+    submesh.StartIndexCount = 0;
+    submesh.IndexCount = (UINT)indices.size();
+
+    geo->DrawArags["grid"] = submesh;
+
+    m_geometries["landGeo"] = std::move(geo);
 }
 
 #endif // IS_ENABLE_LITLAND_APP
