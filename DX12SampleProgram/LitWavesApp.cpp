@@ -207,4 +207,36 @@ void LitWavesApp::BuildMaterials()
     m_materials["water"] = std::move(water);
 }
 
+void LitWavesApp::BuildRenderItems()
+{
+    std::unique_ptr<RenderItem> wavesRenderItem = std::make_unique<RenderItem>();
+    wavesRenderItem->World = XMMatrixIdentity();
+    wavesRenderItem->ObjectConstantBufferIndex = 0;
+    wavesRenderItem->Mat = m_materials["water"].get();
+    wavesRenderItem->Geo = m_geometries["waterGeo"].get();
+    wavesRenderItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    wavesRenderItem->IndexCount = wavesRenderItem->Geo->DrawArags["grid"].IndexCount;
+    wavesRenderItem->StartIndexLocation = wavesRenderItem->Geo->DrawArags["grid"].StartIndexCount;
+    wavesRenderItem->BaseVertexLocation = wavesRenderItem->Geo->DrawArags["grid"].BaseVertexLocation;
+
+    m_wavesItem = wavesRenderItem.get();
+
+    m_renderItemLayer[(int)RenderLayer::Opaque].push_back(wavesRenderItem.get());
+
+    std::unique_ptr<RenderItem> gridRenderItem = std::make_unique<RenderItem>();
+    gridRenderItem->World = XMMatrixIdentity();
+    gridRenderItem->ObjectConstantBufferIndex = 1;
+    gridRenderItem->Mat = m_materials["grass"].get();
+    gridRenderItem->Geo = m_geometries["landGeo"].get();
+    gridRenderItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    gridRenderItem->IndexCount = gridRenderItem->Geo->DrawArags["grid"].IndexCount;
+    gridRenderItem->BaseVertexLocation = gridRenderItem->Geo->DrawArags["grid"].BaseVertexLocation;
+    gridRenderItem->StartIndexLocation = gridRenderItem->Geo->DrawArags["grid"].StartIndexCount;
+
+    m_renderItemLayer[(int)RenderLayer::Opaque].push_back(gridRenderItem.get());
+
+    m_allRenderItems.push_back(std::move(wavesRenderItem));
+    m_allRenderItems.push_back(std::move(gridRenderItem));
+}
+
 #endif // IS_ENABLE_LITLAND_APP
