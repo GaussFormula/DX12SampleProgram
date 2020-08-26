@@ -239,4 +239,13 @@ void LitWavesApp::BuildRenderItems()
     m_allRenderItems.push_back(std::move(gridRenderItem));
 }
 
+void LitWavesApp::BuildFrameResources()
+{
+    for (UINT i = 0; i < gNumFrameResources; ++i)
+    {
+        m_frameResources.push_back(std::make_unique<FrameResource>(m_device.Get(),
+            1, (UINT)m_allRenderItems.size(), (UINT)m_waves->GetVertexCount(), (UINT)m_materials.size()));
+    }
+}
+
 #endif // IS_ENABLE_LITLAND_APP
