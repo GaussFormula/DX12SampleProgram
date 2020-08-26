@@ -128,4 +128,83 @@ void LitWavesApp::BuildLandGeometry()
     m_geometries["landGeo"] = std::move(geo);
 }
 
+void LitWavesApp::BuildWavesGeometryBuffers()
+{
+    // 3 indices per face.
+    std::vector<std::uint16_t> indices((size_t)3 * m_waves->GetTriangleCount());
+    assert(m_waves->GetVertexCount() < 0x0000ffff);
+
+    // Iterate over each quad.
+    int m = m_waves->GetRowCount();
+    int n = m_waves->GetColumnCount();
+    size_t k = 0;
+    for (int i = 0; i < m - 1; ++i)
+    {
+        for (int j = 0; j < n - 1; ++j)
+        {
+            indices[k] = i * n + j;
+            indices[k + 1] = i * n + j + 1;
+            indices[k + 2] = (i + 1) * n + j;
+
+            indices[k + 3] = (i + 1) * n + j;
+            indices[k + 4] = i * n + j + 1;
+            indices[k + 5] = (i + 1) * n + j + 1;
+
+            k += 6;// Next quad.
+        }
+    }
+
+    UINT vbByteSize = m_waves->GetVertexCount() * sizeof(Vertex);
+    UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+    std::unique_ptr<MeshGeometry> geo = std::make_unique<MeshGeometry>();
+    geo->Name = "waterGeo";
+
+    // Set dynamically.
+    geo->VertexBufferGPU = nullptr;
+    geo->VertexBufferCPU = nullptr;
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+    geo->IndexBufferGPU = CreateDefaultBuffer(m_device.Get(), m_commandList.Get(),
+        indices.data(), ibByteSize, geo->IndexBufferUploader);
+
+    geo->VertexByteStride = sizeof(Vertex);
+    geo->VertexBufferByteSize = vbByteSize;
+    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    geo->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry submesh;
+    submesh.IndexCount = (UINT)indices.size();
+    submesh.StartIndexCount = 0;
+    submesh.BaseVertexLocation = 0;
+
+    geo->DrawArags["grid"] = submesh;
+    m_geometries["waterGeo"] = std::move(geo);
+}
+
+void LitWavesApp::BuildMaterials()
+{
+    std::unique_ptr < Material > grass = std::make_unique<Material>();
+
+    grass->Name = "grass";
+    grass->MaterialConstantBufferIndex = 0;
+    grass->DiffuseAlbedo = XMFLOAT4(0.2f, 0.6f, 0.2f, 1.0f);
+    grass->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
+    grass->Roughness = 0.125f;
+
+    // This is not a good water material defination, but we do not have all the render
+    // tools we need (tranparency, enviroment reflection), so we fake it for now.
+    std::unique_ptr<Material> water = std::make_unique<Material>();
+    water->Name = "water";
+    water->MaterialConstantBufferIndex = 1;
+    water->DiffuseAlbedo = XMFLOAT4(0.0f, 0.2f, 0.6f, 1.0f);
+    water->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
+    water->Roughness = 0.0f;
+
+    m_materials["grass"] = std::move(grass);
+    m_materials["water"] = std::move(water);
+}
+
 #endif // IS_ENABLE_LITLAND_APP
