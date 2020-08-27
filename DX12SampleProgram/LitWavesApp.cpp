@@ -300,6 +300,45 @@ bool LitWavesApp::Initialize()
     // Execute the initialization commands.
     ThrowIfFailed(m_commandList->Close());
     ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // Wait until initialization is completed.
+    FlushCommandQueue();
+
+    return true;
+}
+
+void LitWavesApp::OnResize()
+{
+    D3DAppBase::OnResize();
+
+    // When window resized, so update the aspect ratio and recompute the projection matrix.
+    m_proj = XMMatrixPerspectiveFovLH(0.25 * XM_PI, GetAspectRatio(), 1.0f, 1000.0f);
+}
+
+void LitWavesApp::OnKeyboardInput(const GameTimer& gt)
+{
+    const float dt = gt.DeltaTime();
+
+    if (GetAsyncKeyState(VK_LEFT) & 0x8000)
+    {
+        m_sunTheta -= 1.0f * dt;
+    }
+
+    if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
+    {
+        m_sunTheta += 1.0f * dt;
+    }
+
+    if (GetAsyncKeyState(VK_UP) & 0x8000)
+    {
+        m_sunPhi -= 1.0f * dt;
+    }
+
+    if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+    {
+        m_sunPhi += 1.0f * dt;
+    }
 }
 
 #endif // IS_ENABLE_LITLAND_APP
