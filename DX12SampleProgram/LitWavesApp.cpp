@@ -269,6 +269,37 @@ void LitWavesApp::BuildPSOs()
     opaquePsoDesc.SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
     opaquePsoDesc.DSVFormat = m_depthStencilFormat;
     ThrowIfFailed(m_device->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&m_PSOs["opaque"])));
+
+    // PSO for opaque wireframe objects.
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
+    opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    ThrowIfFailed(m_device->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&m_PSOs["opaque_wireframe"])));
+}
+
+bool LitWavesApp::Initialize()
+{
+    if (!D3DAppBase::Initialize())
+    {
+        return false;
+    }
+
+    // Reset command list to prep for initialization commands.
+    ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+
+    m_waves = std::make_unique<Waves>(256, 256, 1.0f, 0.03f, 4.0f, 0.2f);
+
+    BuildRootSignature();
+    BuildShadersAndInputLayout();
+    BuildLandGeometry();
+    BuildWavesGeometryBuffers();
+    BuildMaterials();
+    BuildRenderItems();
+    BuildFrameResources();
+    BuildPSOs();
+
+    // Execute the initialization commands.
+    ThrowIfFailed(m_commandList->Close());
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
 }
 
 #endif // IS_ENABLE_LITLAND_APP
