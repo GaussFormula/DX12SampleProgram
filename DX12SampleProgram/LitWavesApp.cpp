@@ -341,4 +341,21 @@ void LitWavesApp::OnKeyboardInput(const GameTimer& gt)
     }
 }
 
+void LitWavesApp::UpdateCamera(const GameTimer& gt)
+{
+    // Convert Spherical to Cartesian coordinates.
+
+    // theta is angle of vector with Y axis.
+    // phi is angle of vector with x axis.
+    m_cameraPos.x = m_radius * sinf(m_phi) * cosf(m_theta);
+    m_cameraPos.y = m_radius * cosf(m_phi);
+    m_cameraPos.z = m_radius * sinf(m_phi) * sinf(m_theta);
+
+    // Build the view matrix.
+    XMVECTOR pos = XMVectorSet(m_cameraPos.x, m_cameraPos.y, m_cameraPos.z, 1.0f);
+    XMVECTOR target = XMVectorZero();
+    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    
+    m_view = XMMatrixLookAtLH(pos, target, up);
+}
 #endif // IS_ENABLE_LITLAND_APP

@@ -82,6 +82,8 @@ private:
     DirectX::XMMATRIX m_view = DirectX::XMMatrixIdentity();
     DirectX::XMMATRIX m_proj = DirectX::XMMatrixIdentity();
 
+    // theta is angle of vector with Y axis.
+    // phi is angle of vector with x axis.
     float m_theta = 1.5f * DirectX::XM_PI;
     float m_phi = DirectX::XM_PIDIV2 - 0.1f;
     float m_radius = 50.0f;
