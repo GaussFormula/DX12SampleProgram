@@ -362,5 +362,22 @@ void LitWavesApp::UpdateCamera(const GameTimer& gt)
 void LitWavesApp::UpdateObjectConstantBuffers(const GameTimer& gt)
 {
     UploadBuffer<ObjectConstants>* currentObjectCB = m_currentFrameResource->m_objCB.get();
+    for (auto& e : m_allRenderItems)
+    {
+        // Only update the cbuffer data if the constants have changed.
+        // This needs to be tracked per frame resource.
+        if (e->NumFrameDirty > 0)
+        {
+            ObjectConstants objConstants;
+            objConstants.World = XMMatrixTranspose(e->World);
+
+            e->TexTransform = XMMatrixIdentity();
+
+            currentObjectCB->CopyData(e->ObjectConstantBufferIndex, objConstants);
+
+            // Next FrameResource need to be updated too.
+            e->NumFrameDirty--;
+        }
+    }
 }
 #endif // IS_ENABLE_LITLAND_APP
