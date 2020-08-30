@@ -358,4 +358,9 @@ void LitWavesApp::UpdateCamera(const GameTimer& gt)
     
     m_view = XMMatrixLookAtLH(pos, target, up);
 }
+
+void LitWavesApp::UpdateObjectConstantBuffers(const GameTimer& gt)
+{
+    UploadBuffer<ObjectConstants>* currentObjectCB = m_currentFrameResource->m_objCB.get();
+}
 #endif // IS_ENABLE_LITLAND_APP
