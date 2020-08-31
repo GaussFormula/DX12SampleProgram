@@ -380,4 +380,59 @@ void LitWavesApp::UpdateObjectConstantBuffers(const GameTimer& gt)
         }
     }
 }
+
+void LitWavesApp::UpdateMaterialConstantBuffers(const GameTimer& gt)
+{
+    auto currentMaterialCB = m_currentFrameResource->m_materialCB.get();
+    for (auto& e : m_materials)
+    {
+        // Only update the cbuffer data if the constants have changed.
+        // If the cbuffer data changes, it needs to be updated for each FrameResource.
+        Material* mat = e.second.get();
+        if (mat->NumFramesDirty > 0)
+        {
+            MaterialConstants matConstants;
+            matConstants.DiffuseAlbedo = mat->DiffuseAlbedo;
+            matConstants.FresnelR0 = mat->FresnelR0;
+            matConstants.Roughness = mat->Roughness;
+
+            currentMaterialCB->CopyData(mat->MaterialConstantBufferIndex, matConstants);
+
+            // Next FrameResource need to be updated too.
+            mat->NumFramesDirty--;
+        }
+    }
+}
+
+void LitWavesApp::UpdateMainPassConstantBuffer(const GameTimer& gt)
+{
+    XMMATRIX viewProj = XMMatrixMultiply(m_view, m_proj);
+    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(m_view), m_view);
+    XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(m_proj), m_proj);
+    XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
+
+    m_mainPassCB.View = XMMatrixTranspose(m_view);
+    m_mainPassCB.InvView = XMMatrixTranspose(invView);
+    m_mainPassCB.Proj = XMMatrixTranspose(m_proj);
+    m_mainPassCB.InvProj = XMMatrixTranspose(invProj);
+    m_mainPassCB.ViewProj = XMMatrixTranspose(viewProj);
+    m_mainPassCB.InvViewProj = XMMatrixTranspose(invViewProj);
+
+    m_mainPassCB.EyePosW = m_cameraPos;
+    m_mainPassCB.RenderTargetSize = XMFLOAT2((float)m_width, (float)m_height);
+    m_mainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / m_width, 1.0f / m_height);
+    m_mainPassCB.NearZ = 1.0f;
+    m_mainPassCB.FarZ = 1000.0f;
+    m_mainPassCB.TotalTime = gt.TotalTime();
+    m_mainPassCB.DeltaTime = gt.DeltaTime();
+    m_mainPassCB.AmbientLight = { 0.25f,0.25f,0.35f,1.0f };
+
+    XMVECTOR lightDir = -myMathLibrary::SphericalToCartesian(1.0f, m_sunTheta, m_sunPhi);
+    XMStoreFloat3(&m_mainPassCB.Lights[0].Direction, lightDir);
+    m_mainPassCB.Lights[0].Strength = { 1.0f,1.0f,0.9f };
+
+    auto currentPassCB = m_currentFrameResource->m_passCB.get();
+    currentPassCB->CopyData(0, m_mainPassCB);
+}
+
 #endif // IS_ENABLE_LITLAND_APP

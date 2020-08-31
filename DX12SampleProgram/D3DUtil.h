@@ -219,6 +219,28 @@ struct Material
     DirectX::XMMATRIX MaterialTransform = DirectX::XMMatrixIdentity();
 };
 
+struct MaterialConstants
+{
+    DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f,1.0f,1.0f,1.0f };
+    DirectX::XMFLOAT3 FresnelR0 = { 0.02f,0.02f,0.02f };
+    float Roughness = 0.25f;
+
+    // Used in the chapter on texture mapping.
+    DirectX::XMMATRIX MatrixTransform = DirectX::XMMatrixIdentity();
+};
+
+struct Light
+{
+    DirectX::XMFLOAT3 Strength = { 0.5f,0.5f,0.5f };
+    float FalloffStart = 1.0f;                          // point/spot light only.
+    DirectX::XMFLOAT3 Direction = { 0.0f,-1.0f,0.0f };  // directional/spot light only.
+    float FalloffEnd = 10.0f;                           // point/spot light only.
+    DirectX::XMFLOAT3 Position = { 0.0f,0.0f,0.0f };    // point/spot light only.
+    float SpotPower = 64.0f;                            // spot light only.
+};
+
+#define MaxLights 16
+
 struct Texture
 {
     // Unique material name for looking up;
