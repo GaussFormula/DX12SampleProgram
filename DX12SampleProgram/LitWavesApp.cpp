@@ -435,4 +435,90 @@ void LitWavesApp::UpdateMainPassConstantBuffer(const GameTimer& gt)
     currentPassCB->CopyData(0, m_mainPassCB);
 }
 
+void LitWavesApp::UpdateWaves(const GameTimer& gt)
+{
+    // Every quarter second, generate a random wave.
+    static float t_base = 0.0f;
+    if ((m_gameTimer.TotalTime() - t_base) >= 0.25f)
+    {
+        t_base += 0.25f;
+
+        int i = myMathLibrary::Rand(4, m_waves->GetRowCount() - 5);
+        int j = myMathLibrary::Rand(4, m_waves->GetColumnCount() - 5);
+
+        float r = myMathLibrary::RandF(0.2f, 0.5f);
+
+        m_waves->Disturb(i, j, r);
+    }
+
+    // Update the wave simulation.
+    m_waves->Update(gt.DeltaTime());
+
+    // Update the wave vertex buffer with the new solution.
+    UploadBuffer<Vertex>* currentWaveCB = m_currentFrameResource->m_wavesVB.get();
+    for (int i = 0; i < m_waves->GetVertexCount(); ++i)
+    {
+        Vertex v;
+        v.Pos = m_waves->Position(i);
+        v.Normal = m_waves->Normal(i);
+
+        currentWaveCB->CopyData(i, v);
+    }
+
+    // Set the dynamic VB of the wave renderitem to the current frame VB.
+    m_wavesItem->Geo->VertexBufferGPU = currentWaveCB->Resource();
+}
+
+void LitWavesApp::Update(const GameTimer& gt)
+{
+    OnKeyboardInput(gt);
+    UpdateCamera(gt);
+
+    // Cycle through the circular frame resource array.
+    m_currentFrameResourceIndex = (m_currentFrameResourceIndex + 1) % gNumFrameResources;
+    m_currentFrameResource = m_frameResources[m_currentFrameResourceIndex].get();
+
+    // Has the GPU finished processing the commands of the current frame resource.
+    // If not, wait until the GPU has completed commands up to this fence point.
+    if (m_currentFrameResource->m_fence != 0 && m_fence->GetCompletedValue() < m_currentFrameResource->m_fence)
+    {
+        HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+        ThrowIfFailed(m_fence->SetEventOnCompletion(m_currentFrameResource->m_fence, eventHandle));
+        WaitForSingleObject(eventHandle,INFINITE);
+        CloseHandle(eventHandle);
+    }
+
+    UpdateObjectConstantBuffers(gt);
+    UpdateMaterialConstantBuffers(gt);
+    UpdateMainPassConstantBuffer(gt);
+    UpdateWaves(gt);
+}
+
+void LitWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& renderItems)
+{
+    UINT objCBByteSize = CalculateConstantBufferByteSize(sizeof(ObjectConstants));
+    UINT matCBByteSize = CalculateConstantBufferByteSize(sizeof(MaterialConstants));
+
+    ID3D12Resource* objectCB = m_currentFrameResource->m_objCB->Resource();
+    ID3D12Resource* matCB = m_currentFrameResource->m_materialCB->Resource();
+
+    // For each render item...
+    for (size_t i = 0; i < renderItems.size(); ++i)
+    {
+        RenderItem* ri = renderItems[i];
+
+        cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView());
+        cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
+        cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
+
+        D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjectConstantBufferIndex * (UINT64)objCBByteSize;
+        D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MaterialConstantBufferIndex * (UINT64)matCBByteSize;
+
+        cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+        cmdList->SetGraphicsRootConstantBufferView(1, matCBAddress);
+
+        cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+    }
+}
+
 #endif // IS_ENABLE_LITLAND_APP
