@@ -92,4 +92,6 @@ private:
     float m_sunPhi = DirectX::XM_PIDIV4;
 
     POINT m_lastMousePos = { LONG(0),LONG(0) };
+
+    bool m_isWireFrame = false;
 };

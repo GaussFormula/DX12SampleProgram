@@ -339,6 +339,15 @@ void LitWavesApp::OnKeyboardInput(const GameTimer& gt)
     {
         m_sunPhi += 1.0f * dt;
     }
+
+    if (GetAsyncKeyState('1') & 0x8000)
+    {
+        m_isWireFrame = true;
+    }
+    else
+    {
+        m_isWireFrame = false;
+    }
 }
 
 void LitWavesApp::UpdateCamera(const GameTimer& gt)
@@ -521,4 +530,73 @@ void LitWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std:
     }
 }
 
+void LitWavesApp::Draw(const GameTimer& gt)
+{
+    // Reuse the memory associated with command recording.
+    // We can only reset when the associated command lists have finished execution on the GPU.
+    ThrowIfFailed(m_currentFrameResource->m_commandAllocator->Reset());
+
+    // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+    // Reusing the command list reuses memory.
+    if (m_isWireFrame)
+    {
+        ThrowIfFailed(m_commandList->Reset(m_currentFrameResource->m_commandAllocator.Get(),
+            m_PSOs["opaque_wireframe"].Get()));
+    }
+    else
+    {
+        ThrowIfFailed(m_commandList->Reset(m_currentFrameResource->m_commandAllocator.Get(),
+            m_PSOs["opaque"].Get()));
+    }
+
+    m_commandList->RSSetViewports(1, &m_screenViewport);
+    m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
+    // Indicate a state transition on the resouce usage.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        CurrentBackBuffer(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+    ));
+
+    // Clear the back buffer and depth buffer.
+    m_commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightBlue, 0, nullptr);
+    m_commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    // Specify the buffers we are going to render to.
+    m_commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+
+    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+    ID3D12Resource* passCB = m_currentFrameResource->m_passCB->Resource();
+    m_commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+
+    DrawRenderItems(m_commandList.Get(), m_renderItemLayer[(int)RenderLayer::Opaque]);
+
+    // Indicate a state transition on the resource usage.
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+        CurrentBackBuffer(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT
+    ));
+
+    // Done recording commands.
+    ThrowIfFailed(m_commandList->Close());
+
+    // Add the command list to the queue for execution.
+    ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+    // Swap the back and front buffers.
+    ThrowIfFailed(m_swapchain->Present(0, 0));
+    m_currentBackBufferIndex = (m_currentBackBufferIndex + 1) % m_swapChainBufferCount;
+
+    // Advance the fence value to mark commands up to this fence point.
+    m_currentFrameResource->m_fence = ++m_currentFence;
+
+    // Add an instruction to the command queue to set a new fence point. 
+    // Because we are on the GPU timeline, the new fence point won't be 
+    // set until the GPU finishes processing all the commands prior to this Signal().
+    m_commandQueue->Signal(m_fence.Get(), m_currentFence);
+}
 #endif // IS_ENABLE_LITLAND_APP
